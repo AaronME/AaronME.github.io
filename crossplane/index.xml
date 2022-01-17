@@ -1,2 +1,31 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>A Tour of Crossplane on AaronEaton.com</title><link>https://aaroneaton.com/crossplane/</link><description>Recent content in A Tour of Crossplane on AaronEaton.com</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 07 Jan 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://aaroneaton.com/crossplane/index.xml" rel="self" type="application/rss+xml"/><item><title>Testing Crossplane Packages with Kuttl</title><link>https://aaroneaton.com/crossplane/crossplane-package-testing-with-kuttl/</link><pubDate>Fri, 07 Jan 2022 00:00:00 +0000</pubDate><guid>https://aaroneaton.com/crossplane/crossplane-package-testing-with-kuttl/</guid><description>Crossplane Package Test Loop The test loop for Crossplane Packages is always going to be an end-2-end test in a working kubernetes cluster. In order to validate that a package behaves as desired, we must:
-Access a Kubernetes Cluster Install Crossplane and required providers on that cluster Configure our Composite Resources (XRs) on that cluster Submit a Composite Resource or Claim Validate that we got the desired Resources in response Repeat the last 3 steps for each Resource Kuttl kuttl (The KUbernetes Test TooL) is a toolkit for writing tests against Kubernetes.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>A Tour of Crossplane on AaronEaton.com</title>
+    <link>https://aaroneaton.com/crossplane/</link>
+    <description>Recent content in A Tour of Crossplane on AaronEaton.com</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 07 Jan 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://aaroneaton.com/crossplane/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>TDD For Crossplane Packages with Skaffold</title>
+      <link>https://aaroneaton.com/crossplane/crossplane-package-tdd-with-skaffold/</link>
+      <pubDate>Fri, 14 Jan 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://aaroneaton.com/crossplane/crossplane-package-tdd-with-skaffold/</guid>
+      <description>Crossplane Package Development Crossplane Packages, and specifically the Composition Engine, allow Platform Teams to publish Composite Resources for use by Development Teams or Platform Operators. The end result of a Crossplane Composition is always going to be a set of valid YAML documents which define Crossplane Managed Resources.
+Because the output of our compositions is this declarative set of YAML documents, we have the ability to write tests for our configurations.</description>
+    </item>
+    
+    <item>
+      <title>Testing Crossplane Packages with Kuttl</title>
+      <link>https://aaroneaton.com/crossplane/crossplane-package-testing-with-kuttl/</link>
+      <pubDate>Fri, 07 Jan 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://aaroneaton.com/crossplane/crossplane-package-testing-with-kuttl/</guid>
+      <description>Crossplane Package Test Loop The test loop for Crossplane Packages is always going to be an end-2-end test in a working kubernetes cluster. In order to validate that a package behaves as desired, we must:
+ Access a Kubernetes Cluster Install Crossplane and required providers on that cluster Configure our Composite Resources (XRs) on that cluster Submit a Composite Resource or Claim Validate that we got the desired Resources in response Repeat the last 3 steps for each Resource  Kuttl kuttl (The KUbernetes Test TooL) is a toolkit for writing tests against Kubernetes.</description>
+    </item>
+    
+  </channel>
+</rss>
