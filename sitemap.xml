@@ -2,10 +2,10 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://aaroneaton.com/</loc>
+    <loc>https://aaroneaton.com/crossplane/crossplane-package-testing-with-sonobuoy/</loc>
     <lastmod>2022-01-28T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://aaroneaton.com/crossplane/crossplane-package-testing-with-sonobuoy/</loc>
+    <loc>https://aaroneaton.com/</loc>
     <lastmod>2022-01-28T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://aaroneaton.com/crossplane/crossplane-package-tdd-with-skaffold/</loc>
