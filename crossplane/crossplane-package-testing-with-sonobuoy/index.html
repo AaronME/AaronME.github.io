@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Using unstructured.Unstructured{} to read Composite Resources from Sonobuoy - AaronEaton.com</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="https://aaroneaton.com/favicon.png">
+
+  
+  
+  <link rel="stylesheet" href="/css/style.min.b5edc2670fbb2e1948c6a17c1870576e18aad63dd2c4e445432feef7238f4ce4.css">
+  
+
+  
+    <meta name="description" content="Using unstructured.Unstructured{} to read XDs with https://sonobuoy.io"/>
+    <meta property="og:title" content="Using unstructured.Unstructured{} to read Composite Resources from Sonobuoy"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="https://aaroneaton.com/crossplane/crossplane-package-testing-with-sonobuoy/"/>
+    <meta property="og:image" content="https://aaroneaton.com/images/crossplane/crossplane-package-validation-with-sonobuoy/test_loop_golang.png"/>
+    <meta property="og:description" content="Using unstructured.Unstructured{} to read XDs with https://sonobuoy.io"/>
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:site" content="@aaron_eaton"/>
+    <meta name="twitter:creator" content="@aaron_eaton"/>
+  
+
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet"> 
+</head>
+
+
+
+
+<body class='page frame page-default-single'>
+  <div id="wrapper" class="wrapper">
+    <div class='header'>
+  <a class="header-logo" href="https://aaroneaton.com/">AaronEaton.com</a>
+  <div class="menu-main">
+    <ul>
+        
+        
+            <li class="menu-item-about">
+                <a href="/pages/about/">About</a>
+            </li>
+        
+            <li class="menu-item-crossplane">
+                <a href="/crossplane/">Crossplane</a>
+            </li>
+        
+    </ul>
+  </div>
+</div>
+    
+<div class="intro">
+  <h1>Using unstructured.Unstructured{} to read Composite Resources from Sonobuoy<span class="dot">.</span></h1>
+  
+  <img src="/images/crossplane/crossplane-package-validation-with-sonobuoy/test_loop_golang.png" />
+  
+</div>
+
+<div class="content">
+  <h2 id="testing-with-sonobuoy">Testing with Sonobuoy</h2>
+<p>Fresh off <a href="https://aaroneaton.com/crossplane/crossplane-package-testing-with-kuttl/">my exploration of
+kuttl</a>
+I wanted to try out some other testing frameworks for our crossplane package
+workflows. As part of our open-source work on Crossplane, Upbound had recently
+published a <a href="https://github.com/crossplane/conformance">conformance</a> suite for
+validating crossplane and providers. That suite used the CNCF required
+<a href="https://sonobuoy.io">sonobuoy</a> to run e2e tests.</p>
+<p>Sonobuoy is &ldquo;a diagnostic tool that makes it easier to
+understand the state of a Kubernetes cluster by running a choice of
+configuration tests in an accessible and non-destructive manner.&rdquo;</p>
+<p>Since sonobuoy is already testing our providers, I decided to see how it would
+work for our configuration packages. (Having a single testing tool for all of the
+currently available crossplane package types could be convenient.)</p>
+<p>In this article, I&rsquo;ll walk you through creating sonobuoy tests for XRDs using
+unstructured.Unstructured{} and the Dynamic Client.</p>
+<h3 id="prerequisites">Prerequisites</h3>
+<p>We&rsquo;re going to assume you have the following installed:</p>
+<ul>
+<li><a href="https://kind.sigs.k8s.io/docs/user/quick-start/#installation">kind</a></li>
+<li><a href="https://helm.sh/docs/intro/install/">helm</a></li>
+<li><a href="https://kubernetes.io/docs/tasks/tools/">kubectl</a></li>
+</ul>
+<h4 id="installing-sonobuoy">Installing sonobuoy</h4>
+<p>I am running Mac OS X, so I installed sonobuoy using homebrew:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">brew install sonobuoy
+</code></pre></div><p>You can find installation instructions for other platforms on
+<a href="https://kuttl.dev/docs/#install-kuttl-cli">kuttl&rsquo;s install page</a>.</p>
+<h3 id="step-one-launch-kind">Step One: Launch Kind</h3>
+<p>Let&rsquo;s get started in a fresh repo. First, bring up a kind cluster and get
+crossplane and your providers running on it:</p>
+<ol>
+<li>&lsquo;kind create cluster &ndash;name sonobuoy-test&rsquo;</li>
+<li>Create a &lsquo;uxp-values.yaml&rsquo; file that installs provider-aws and
+platform-ref-aws</li>
+<li>&lsquo;up uxp install -f uxp-values.yaml&rsquo;</li>
+</ol>
+<p>Now we&rsquo;ve got a test environment, let&rsquo;s get some boilerplate code.</p>
+<h4 id="wait-shouldnt-i-get-a-configuration-package">Wait&hellip; shouldn&rsquo;t I get a configuration package?</h4>
+<p>No. One of the things I came to appreciate during my deep-dive into
+Sonobuoy was the value of having tests separated from the code it is testing. I
+want tests I can run repeatedly, in many different scenarios. I want tests that
+work against my own packages, and packages I depend upon. I want to test whether
+a package works against a specific version of kubernetes, a specific version of
+crossplane, a specific version of a provider. I want to run tests on local, in
+development, in production.</p>
+<p>Sonobuoy lets me do this buy building tests into a deployable container image
+that I can launch into any environment.</p>
+<p>So&hellip; no local package this time.</p>
+<h3 id="step-two-download-the-e2e-example-plugin-starter">Step Two: Download the e2e-example Plugin Starter</h3>
+<p>Sonobuoy offers a repo full of plugin examples we can use for starters. We&rsquo;re
+going to use the &lsquo;e2e-skeleton.&rsquo; If you want to know more, you can check out <a href="https://sonobuoy.io/plugin-starter/">sonobuoy&rsquo;s blog</a>
+on it.</p>
+<ol>
+<li>Clone the <a href="https://github.com/vmware-tanzu/sonobuoy-plugins">sonobuoy-plugins
+repo</a></li>
+<li>Copy the contents of &lsquo;sonobuoy-plugins/examples/e2e-skeleton&rsquo; to a &lsquo;plugin/&rsquo;
+directory.</li>
+<li>&lsquo;pushd plugin/pkg&rsquo; to get into the code root.</li>
+</ol>
+<h4 id="running-from-the-command-line">Running from the command line.</h4>
+<p>Sonobuoy is built on the golang &lsquo;testing&rsquo; library. So we should be able to run
+it using &lsquo;go test ./&hellip;&rsquo;. But if you did that right now, you&rsquo;d get this error:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">envconfig: client failed: unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined
+FAIL    github.com/vmware-tanzu/sonobuoy-plugins/examples/e2e-skeleton/pkg      0.391s
+FAIL
+</code></pre></div><p>I&rsquo;ll save you some agony; Adding those ENV VARS is not going to help. As
+previously mentioned, Sonobuoy plugins are intended to run inside a cluster. You
+can see this on Line 40 of &lsquo;pkg/main_test.go&rsquo;:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang">    <span class="nx">testenv</span> <span class="p">=</span> <span class="nx">env</span><span class="p">.</span><span class="nf">NewInClusterConfig</span><span class="p">()</span>
+</code></pre></div><p>And, on line 56, where the Client is created:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang">		<span class="nx">_</span><span class="p">,</span><span class="nx">err</span><span class="o">:=</span><span class="nx">config</span><span class="p">.</span><span class="nf">NewClient</span><span class="p">()</span>
+</code></pre></div><p>To run this from the command-line, we&rsquo;ll need to update the code. Let&rsquo;s allow
+supplying an external Kubeconfig file at runtime.</p>
+<p>First, add the new ENV VAR to the list of constants starting on line 34 of
+&lsquo;main_test.go&rsquo;:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">ProgressReporterCtxKey</span>    <span class="p">=</span> <span class="s">&#34;SONOBUOY_PROGRESS_REPORTER&#34;</span>
+	<span class="nx">NamespacePrefixKey</span>        <span class="p">=</span> <span class="s">&#34;NS_PREFIX&#34;</span>
+	<span class="nx">ExternalClusterKubeconfig</span> <span class="p">=</span> <span class="s">&#34;EXTERNAL_KUBECONFIG&#34;</span>
+<span class="p">)</span>
+</code></pre></div><p>And now, starting on line 56 (within the testenv.Setup method), let&rsquo;s use this
+to create a new client:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang">		<span class="c1">// Try and create the client; doing it before all the tests allows the tests to assume
+</span><span class="c1"></span>		<span class="c1">// it can be created without error and they can just use config.Client().
+</span><span class="c1"></span>
+ 		<span class="c1">// If EXTERNAL_KUBECONFIG is set, create a client based on the kubeconfig
+</span><span class="c1"></span>    <span class="nx">externalKubeConfig</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">Getenv</span><span class="p">(</span><span class="nx">ExternalClusterKubeconfig</span><span class="p">)</span>
+
+		<span class="kd">var</span> <span class="nx">err</span> <span class="kt">error</span>
+		<span class="k">if</span> <span class="nx">externalKubeConfig</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+			<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">config</span><span class="p">.</span><span class="nf">WithKubeconfigFile</span><span class="p">(</span><span class="nx">externalKubeConfig</span><span class="p">).</span><span class="nf">NewClient</span><span class="p">()</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">config</span><span class="p">.</span><span class="nf">NewClient</span><span class="p">()</span>
+		<span class="p">}</span>
+</code></pre></div><p>Great. Now we can export a kubeconfig from kind and us it to run the tests:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">kind <span class="nb">export</span> kubeconfig --name sonobuoy --kubeconfig kubeconfig
+<span class="nb">export</span> <span class="nv">EXTERNAL_KUBECONFIG</span><span class="o">=</span>kubeconfig
+<span class="nb">export</span> <span class="nv">NS_PREFIX</span><span class="o">=</span>tour
+</code></pre></div><p>We&rsquo;re also setting NS_PREFIX to avoid generating invalid resource names. Let&rsquo;s
+try running the tests again:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">go <span class="nb">test</span> ./...
+ok      github.com/vmware-tanzu/sonobuoy-plugins/examples/e2e-skeleton/pkg      25.325s
+</code></pre></div><p>Awesome, our code works. This is a good time to add &lsquo;kubeconfig&rsquo; to your .gitignore</p>
+<h4 id="our-first-test">Our First Test</h4>
+<p>We&rsquo;re not going to use &lsquo;custom_test.go&rsquo; for much more than reference. Let&rsquo;s go
+ahead and start a new file. Because we are using the go &lsquo;testing&rsquo; framework,
+remember that every test file name must end with &lsquo;_test.go&rsquo;.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">touch platform_ref_aws_test.go
+</code></pre></div><p>This is my plan:</p>
+<ol>
+<li>We want to create a new Composite Resource Claim</li>
+<li>We want to confirm that every resource defined in the Claim is generated.</li>
+</ol>
+<p>The custom_test from the example doesn&rsquo;t create any pods. All it does is list
+the pods in &lsquo;kube-system&rsquo; and confirm they got more than one. But we can use
+this as an example of how to access resources in the cluster. Here is how the
+example plugin gets a list of pods:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang">			<span class="kd">var</span> <span class="nx">pods</span> <span class="nx">corev1</span><span class="p">.</span><span class="nx">PodList</span>
+			<span class="nx">err</span> <span class="o">:=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nf">Client</span><span class="p">().</span><span class="nf">Resources</span><span class="p">(</span><span class="s">&#34;kube-system&#34;</span><span class="p">).</span><span class="nf">List</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">TODO</span><span class="p">(),</span> <span class="o">&amp;</span><span class="nx">pods</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+			<span class="p">}</span>
+</code></pre></div><p>See the problem? Here it is again:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang">			<span class="kd">var</span> <span class="nx">pods</span> <span class="nx">corev1</span><span class="p">.</span><span class="nx">PodList</span>
+</code></pre></div><p>That&rsquo;s right: Kubernetes is a typed system. In order to ask for a resource, you
+must know what type it is. And this is where I got to learn a few things about
+golang and kubernetes.</p>
+<h4 id="you-_cannot_-import-the-types-of-a-configuration-package">You <em>Cannot</em> Import the Types of a Configuration Package</h4>
+<p>Crossplane Configuration Packages define Composite Resources. To define a
+composite resource we write a CompositeResourceDefinition (XRD) and one or
+more Compositions.</p>
+<p>Once submitted to the Kubernetes API, crossplane will generate a
+CustomResourceDefinition (CRD) based on the Schema in the XRD.</p>
+<p>Unlike the types defined in an operator or provider, the schema for an XRD is
+not available in any go package. It is defined at runtime in the target
+Kubernetes API.</p>
+<p>So, if we cannot import the types of our objects, how can we request them from
+the Cluster? And how do we work with them in our tests?</p>
+<h3 id="step-three-learn-about-unstructuredunstructured">Step Three: Learn about unstructured.Unstructured</h3>
+<p>Okay, so this is not <em>impossible</em>. I know that golang is a strongly typed
+language, and I know that kubernetes is a strongly typed system. But I also know
+that I &lsquo;kubectl apply&rsquo; all the time, and my client has no idea what all types
+I&rsquo;m working with.</p>
+<p>So I started trying to find out what Kubernetes does with Yaml (or json) before
+it knows what type it&rsquo;s got.</p>
+<h4 id="runtimeobject-taught-me-interfaces-are-not-freebies">runtime.Object{} taught me interfaces are not &lsquo;freebies&rsquo;</h4>
+<p>I discovered the &lsquo;runtime.Object{}&rsquo;, and spent a few days with it. It&rsquo;s an
+interface, so I should be able to make it work how I wanted right?</p>
+<p>Wrong. Interfaces are not &lsquo;freebies.&rsquo; Just because I have an interface doesn&rsquo;t
+mean I can hand it anything. I must hand it an object that satisfies the
+interface contract. In other words, runtime.Object{} can be used to work with
+any number of types. But that doesn&rsquo;t solve the problem.</p>
+<p>The problem is not that we have to do the same thing with a multitude of
+types. The problem is <em>we will never have a type</em> in these test cases.</p>
+<h4 id="the-sources">The Source(s)</h4>
+<p>After a <em>lot</em> of searching, I finally found <a href="https://caiorcferreira.github.io/post/the-kubernetes-dynamic-client/">The Kubernetes Dynamic
+Client</a>.</p>
+<p>Along with <a href="https://trstringer.com/kubernetes-dynamic-client-go/">Unstructured Kubernetes Components with client-go&rsquo;s Dynamic
+Client</a>, I had found my
+answer.</p>
+<p>The answer is &lsquo;unstructured.Unstructured{}.&rsquo;</p>
+<h3 id="step-four-implement-unstructuredunstructured">Step Four: Implement unstructured.Unstructured</h3>
+<p>To implement this wild new type, we must:</p>
+<ol>
+<li>Create a Dynamic Client</li>
+<li>Establish the GroupVersionResource for any XR or Claim we are going to work
+with</li>
+</ol>
+<h4 id="the-dynamic-client">The Dynamic Client</h4>
+<p>We don&rsquo;t want to simply overwrite the client used by Sonobuoy&rsquo;s boilerplate.
+We might decide to at a later date, but for now we don&rsquo;t want to get lost
+rewriting calls that already work. So we&rsquo;ll just make a Dynamic Client available
+via a method in <em>main_test.go</em>:</p>
+<p>Add the following imports:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang">	<span class="s">&#34;k8s.io/client-go/dynamic&#34;</span>
+	<span class="s">&#34;k8s.io/client-go/rest&#34;</span>
+	<span class="s">&#34;k8s.io/client-go/tools/clientcmd&#34;</span>
+</code></pre></div><p>And this method at the bottom of the file:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">func</span> <span class="nf">newDynamicClient</span><span class="p">()</span> <span class="p">(</span><span class="nx">dynamic</span><span class="p">.</span><span class="nx">Interface</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">externalKubeConfig</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">Getenv</span><span class="p">(</span><span class="nx">ExternalClusterKubeconfig</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="nx">externalKubeConfig</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+		<span class="nx">config</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">clientcmd</span><span class="p">.</span><span class="nf">BuildConfigFromFlags</span><span class="p">(</span><span class="s">&#34;&#34;</span><span class="p">,</span> <span class="s">&#34;./kubeconfig&#34;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;error getting Kubernetes config: %v\n&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+
+		<span class="nx">dynClient</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dynamic</span><span class="p">.</span><span class="nf">NewForConfig</span><span class="p">(</span><span class="nx">config</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+
+		<span class="k">return</span> <span class="nx">dynClient</span><span class="p">,</span> <span class="kc">nil</span>
+
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">config</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">rest</span><span class="p">.</span><span class="nf">InClusterConfig</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+
+		<span class="nx">dynClient</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dynamic</span><span class="p">.</span><span class="nf">NewForConfig</span><span class="p">(</span><span class="nx">config</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+
+		<span class="k">return</span> <span class="nx">dynClient</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><p>Now, in <em>platform_ref_aws_test.go</em> we start a test suite:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="kn">package</span> <span class="nx">pkg</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;context&#34;</span>
+	<span class="s">&#34;testing&#34;</span>
+
+	<span class="s">&#34;sigs.k8s.io/e2e-framework/pkg/envconf&#34;</span>
+	<span class="s">&#34;sigs.k8s.io/e2e-framework/pkg/features&#34;</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="nf">TestPlatformRefAWS</span><span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">t</span><span class="p">.</span><span class="nf">Parallel</span><span class="p">()</span> <span class="c1">// We want to run all tests simultaneously
+</span><span class="c1"></span>
+	<span class="nx">f</span> <span class="o">:=</span> <span class="nx">features</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;Rendered&#34;</span><span class="p">).</span>
+		<span class="nf">Assess</span><span class="p">(</span><span class="s">&#34;Managed Resources&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">t</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">,</span> <span class="nx">cfg</span> <span class="o">*</span><span class="nx">envconf</span><span class="p">.</span><span class="nx">Config</span><span class="p">)</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span> <span class="p">{</span>
+			<span class="c1">// The e2e-skeleton comes with a client based on their klient type.
+</span><span class="c1"></span>			<span class="c1">// We want to use a dynamic client, which enables working with
+</span><span class="c1"></span>			<span class="c1">// unstructured resources
+</span><span class="c1"></span>			<span class="nx">dynClient</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">newDynamicClient</span><span class="p">()</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+			<span class="p">}</span>
+
+			<span class="k">return</span> <span class="nx">ctx</span>
+		<span class="p">})</span>
+	<span class="nx">testenv</span><span class="p">.</span><span class="nf">Test</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span> <span class="nx">f</span><span class="p">.</span><span class="nf">Feature</span><span class="p">())</span>
+<span class="p">}</span>
+</code></pre></div><h4 id="setting-up-the-groupversionresource-and-claim">Setting up the GroupVersionResource and Claim</h4>
+<p>Now we are going to establish the GroupVersionResource for our Caim and XR. We
+need both, because a Claim orders Crossplane to create an XR (which is how a
+namespaced object becomes a set of cluster-scoped Managed Resources).</p>
+<p>There are a ton of ways to include these objects, but this is just a demo. So
+we&rsquo;re going to store them in-line:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="o">...</span>
+	<span class="nx">t</span><span class="p">.</span><span class="nf">Parallel</span><span class="p">()</span> <span class="c1">// We want to run all tests simultaneously
+</span><span class="c1"></span>
+	<span class="c1">// We need to declare the GVR for both our XRs and Claims
+</span><span class="c1"></span>	<span class="c1">// This is the XR
+</span><span class="c1"></span>	<span class="nx">compositeResource</span> <span class="o">:=</span> <span class="nx">schema</span><span class="p">.</span><span class="nx">GroupVersionResource</span><span class="p">{</span>
+		<span class="nx">Group</span><span class="p">:</span>    <span class="s">&#34;aws.platformref.crossplane.io&#34;</span><span class="p">,</span>
+		<span class="nx">Version</span><span class="p">:</span>  <span class="s">&#34;v1alpha1&#34;</span><span class="p">,</span>
+		<span class="nx">Resource</span><span class="p">:</span> <span class="s">&#34;compositenetworks&#34;</span><span class="p">,</span> <span class="c1">// remember to use the plural
+</span><span class="c1"></span>	<span class="p">}</span>
+
+	<span class="c1">// This is the Claim
+</span><span class="c1"></span>	<span class="nx">claimResource</span> <span class="o">:=</span> <span class="nx">schema</span><span class="p">.</span><span class="nx">GroupVersionResource</span><span class="p">{</span>
+		<span class="nx">Group</span><span class="p">:</span>    <span class="s">&#34;aws.platformref.crossplane.io&#34;</span><span class="p">,</span>
+		<span class="nx">Version</span><span class="p">:</span>  <span class="s">&#34;v1alpha1&#34;</span><span class="p">,</span>
+		<span class="nx">Resource</span><span class="p">:</span> <span class="s">&#34;networks&#34;</span><span class="p">,</span> <span class="c1">// remember to use the plural
+</span><span class="c1"></span>	<span class="p">}</span>
+
+	<span class="c1">// This will be the Claim form of the example
+</span><span class="c1"></span>	<span class="nx">claim</span> <span class="o">:=</span> <span class="s">`---
+</span><span class="s">apiVersion: aws.platformref.crossplane.io/v1alpha1
+</span><span class="s">kind: Network
+</span><span class="s">metadata:
+</span><span class="s">  name: network
+</span><span class="s">spec:
+</span><span class="s">  id: platform-ref-aws-network
+</span><span class="s">  clusterRef:
+</span><span class="s">  id: platform-ref-aws-cluster
+</span><span class="s">`</span>
+	<span class="nx">f</span> <span class="o">:=</span> <span class="nx">features</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;Rendered&#34;</span><span class="p">).</span>
+<span class="o">...</span>
+</code></pre></div><h4 id="create-our-unstructured-object">Create our Unstructured Object</h4>
+<p>And now we can Unmarshal that YAML into an unstructured.Unstructured{} Type:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="o">...</span>
+	<span class="c1">// Unmarshal the Yaml into an Unstructured Resource.
+</span><span class="c1"></span>	<span class="c1">// This requires going through Yaml.
+</span><span class="c1"></span>	<span class="nx">unstructuredClaim</span> <span class="o">:=</span> <span class="nx">unstructured</span><span class="p">.</span><span class="nx">Unstructured</span><span class="p">{}</span>
+	<span class="nx">json</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">yaml</span><span class="p">.</span><span class="nf">YAMLToJSON</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">claim</span><span class="p">))</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">err</span> <span class="p">=</span> <span class="nx">unstructuredClaim</span><span class="p">.</span><span class="nf">UnmarshalJSON</span><span class="p">(</span><span class="nx">json</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="nx">f</span> <span class="o">:=</span> <span class="nx">features</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;Rendered&#34;</span><span class="p">).</span>
+<span class="o">...</span>
+</code></pre></div><p>Because our claim is namespaced, we need to grab the name of the testing
+namespace. The framework stores this in the context. You can examine the
+&lsquo;nsKey()&rsquo; method in &lsquo;main_test.go&rsquo; to see how.</p>
+<p>We can capture the value of this key, but we need to grab the name of the Test
+Suite before we start on any features or individual tests. This is because the
+name of each test is a &lsquo;/&rsquo; joined concatenation of the Test Suite Name, Feature
+Name, and Test Step Name.</p>
+<p>So, first we add this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="o">...</span>
+<span class="kd">func</span> <span class="nf">TestPlatformRefAWS</span><span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">t</span><span class="p">.</span><span class="nf">Parallel</span><span class="p">()</span> <span class="c1">// We want to run all tests simultaneously
+</span><span class="c1"></span>
+	<span class="c1">// We need to capture the namespace key name here because the test name
+</span><span class="c1"></span>	<span class="c1">// changes inside Features and Assess methods
+</span><span class="c1"></span>	<span class="nx">namespaceKey</span> <span class="o">:=</span> <span class="nf">nsKey</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span>
+<span class="o">...</span>
+</code></pre></div><p>And then we can set the name of our resource in the Test Step:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="o">...</span>
+		<span class="nf">Assess</span><span class="p">(</span><span class="s">&#34;Managed Resources&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">t</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">,</span> <span class="nx">cfg</span> <span class="o">*</span><span class="nx">envconf</span><span class="p">.</span><span class="nx">Config</span><span class="p">)</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span> <span class="p">{</span>
+			<span class="c1">// We will name our claim after the namespace for the parent test.
+</span><span class="c1"></span>			<span class="nx">ns</span> <span class="o">:=</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprint</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Value</span><span class="p">(</span><span class="nx">namespaceKey</span><span class="p">))</span>
+			<span class="nx">claimName</span> <span class="o">:=</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%s-claim&#34;</span><span class="p">,</span> <span class="nx">ns</span><span class="p">)</span>
+
+			<span class="nx">unstructuredClaim</span><span class="p">.</span><span class="nf">SetName</span><span class="p">(</span><span class="nx">claimName</span><span class="p">)</span>
+			<span class="nx">unstructuredClaim</span><span class="p">.</span><span class="nf">SetNamespace</span><span class="p">(</span><span class="nx">ns</span><span class="p">)</span>
+<span class="o">...</span>
+</code></pre></div><p>Now we use our Dynamic Client to create the Claim. We will wait three seconds
+and then confirm the claim was created:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="o">...</span>
+			<span class="nx">dynClient</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">newDynamicClient</span><span class="p">()</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+			<span class="p">}</span>
+
+			<span class="c1">// Create the Claim
+</span><span class="c1"></span>			<span class="nx">createClaim</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dynClient</span><span class="p">.</span><span class="nf">Resource</span><span class="p">(</span><span class="nx">claimResource</span><span class="p">).</span><span class="nf">Namespace</span><span class="p">(</span><span class="nx">ns</span><span class="p">).</span><span class="nf">Create</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">TODO</span><span class="p">(),</span> <span class="o">&amp;</span><span class="nx">unstructuredClaim</span><span class="p">,</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">CreateOptions</span><span class="p">{})</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Logf</span><span class="p">(</span><span class="s">&#34;creating Claim failed: +%v&#34;</span><span class="p">,</span> <span class="nx">createClaim</span><span class="p">)</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+			<span class="p">}</span>
+
+			<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+
+			<span class="c1">// Retrieve the claim. This confirms our resource created and is also
+</span><span class="c1"></span>			<span class="c1">// necessary to lookup the XR name.
+</span><span class="c1"></span>			<span class="nx">getClaim</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dynClient</span><span class="p">.</span><span class="nf">Resource</span><span class="p">(</span><span class="nx">claimResource</span><span class="p">).</span><span class="nf">Namespace</span><span class="p">(</span><span class="nx">ns</span><span class="p">).</span><span class="nf">Get</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">TODO</span><span class="p">(),</span> <span class="nx">claimName</span><span class="p">,</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">GetOptions</span><span class="p">{})</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Logf</span><span class="p">(</span><span class="s">&#34;getting Claim failed: +%v&#34;</span><span class="p">,</span> <span class="nx">getClaim</span><span class="p">)</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+			<span class="p">}</span>
+<span class="o">...</span>
+</code></pre></div><h4 id="the-first-test">The First Test!</h4>
+<p>Phew! After all that, we can now, finally, write a test case. After our claim is
+created, we want to confirm we got a Composite Resource (XR) for it. If we do
+not find an XR, we will fail the test case:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="o">...</span>
+			<span class="c1">// Get the XR
+</span><span class="c1"></span>			<span class="nx">compositeName</span><span class="p">,</span> <span class="nx">exists</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">unstructured</span><span class="p">.</span><span class="nf">NestedString</span><span class="p">(</span><span class="nx">getClaim</span><span class="p">.</span><span class="nf">UnstructuredContent</span><span class="p">(),</span> <span class="s">&#34;spec&#34;</span><span class="p">,</span> <span class="s">&#34;resourceRef&#34;</span><span class="p">,</span> <span class="s">&#34;name&#34;</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+			<span class="p">}</span>
+
+			<span class="k">if</span> <span class="nx">exists</span> <span class="o">!=</span> <span class="kc">true</span> <span class="p">{</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Log</span><span class="p">(</span><span class="nx">getClaim</span><span class="p">.</span><span class="nf">UnstructuredContent</span><span class="p">())</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="s">&#34;No composite name found.&#34;</span><span class="p">)</span>
+			<span class="p">}</span>
+
+			<span class="c1">// Our first test: confirm that an XR was created.
+</span><span class="c1"></span>			<span class="c1">// This failure will indicate whether a successful composition template
+</span><span class="c1"></span>			<span class="c1">// was selected or not
+</span><span class="c1"></span>			<span class="nx">t</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="s">&#34;Did create XR&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Logf</span><span class="p">(</span><span class="s">&#34;Fetching XR %s&#34;</span><span class="p">,</span> <span class="nx">compositeName</span><span class="p">)</span>
+				<span class="nx">getXR</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dynClient</span><span class="p">.</span><span class="nf">Resource</span><span class="p">(</span><span class="nx">compositeResource</span><span class="p">).</span><span class="nf">Get</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">TODO</span><span class="p">(),</span> <span class="nx">compositeName</span><span class="p">,</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">GetOptions</span><span class="p">{})</span>
+				<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+					<span class="nx">t</span><span class="p">.</span><span class="nf">Logf</span><span class="p">(</span><span class="s">&#34;getting XR failed: +%v&#34;</span><span class="p">,</span> <span class="nx">getXR</span><span class="p">)</span>
+					<span class="nx">t</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+				<span class="p">}</span>
+			<span class="p">})</span>
+<span class="o">...</span>
+</code></pre></div><p>Make sure your imports are up to date with our additional code:</p>
+<p><strong>main_test.go</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;context&#34;</span>
+	<span class="s">&#34;fmt&#34;</span>
+	<span class="s">&#34;os&#34;</span>
+	<span class="s">&#34;testing&#34;</span>
+
+	<span class="nx">plugin_helper</span> <span class="s">&#34;github.com/vmware-tanzu/sonobuoy-plugins/plugin-helper&#34;</span>
+	<span class="nx">v1</span> <span class="s">&#34;k8s.io/api/core/v1&#34;</span>
+	<span class="s">&#34;k8s.io/client-go/dynamic&#34;</span>
+	<span class="s">&#34;k8s.io/client-go/rest&#34;</span>
+	<span class="s">&#34;k8s.io/client-go/tools/clientcmd&#34;</span>
+	<span class="s">&#34;sigs.k8s.io/e2e-framework/pkg/env&#34;</span>
+	<span class="s">&#34;sigs.k8s.io/e2e-framework/pkg/envconf&#34;</span>
+<span class="p">)</span>
+</code></pre></div><p><strong>platform_ref_aws_test.go</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;context&#34;</span>
+	<span class="s">&#34;fmt&#34;</span>
+	<span class="s">&#34;testing&#34;</span>
+	<span class="s">&#34;time&#34;</span>
+
+	<span class="nx">v1</span> <span class="s">&#34;k8s.io/apimachinery/pkg/apis/meta/v1&#34;</span>
+	<span class="s">&#34;k8s.io/apimachinery/pkg/apis/meta/v1/unstructured&#34;</span>
+	<span class="s">&#34;k8s.io/apimachinery/pkg/runtime/schema&#34;</span>
+	<span class="s">&#34;sigs.k8s.io/e2e-framework/pkg/envconf&#34;</span>
+	<span class="s">&#34;sigs.k8s.io/e2e-framework/pkg/features&#34;</span>
+	<span class="s">&#34;sigs.k8s.io/yaml&#34;</span>
+<span class="p">)</span>
+</code></pre></div><h4 id="run-the-test">Run the test</h4>
+<p>We can now run our test. You can keep <em>custom_test.go</em> around if you like, or
+remove it. I&rsquo;ve removed it from the output below:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">% go <span class="nb">test</span> ./... -v     
+<span class="o">===</span> RUN   <span class="nv">TestPlatformRefAWS</span>
+<span class="o">===</span> PAUSE <span class="nv">TestPlatformRefAWS</span>
+<span class="o">===</span> CONT  TestPlatformRefAWS
+    main_test.go:101: Creating namespace tour-41db5 <span class="k">for</span> <span class="nb">test</span> <span class="nv">TestPlatformRefAWS</span>
+<span class="o">===</span> RUN   TestPlatformRefAWS/Rendered
+<span class="o">===</span> RUN   TestPlatformRefAWS/Rendered/Managed_Resources
+<span class="o">===</span> RUN   TestPlatformRefAWS/Rendered/Managed_Resources/Did_create_XR
+    platform_ref_aws_test.go:114: Fetching XR tour-41db5-claim-hptns
+<span class="o">===</span> CONT  TestPlatformRefAWS
+    main_test.go:110: Deleting namespace tour-41db5 <span class="k">for</span> <span class="nb">test</span> TestPlatformRefAWS
+--- PASS: TestPlatformRefAWS <span class="o">(</span>3.05s<span class="o">)</span>
+    --- PASS: TestPlatformRefAWS/Rendered <span class="o">(</span>3.04s<span class="o">)</span>
+        --- PASS: TestPlatformRefAWS/Rendered/Managed_Resources <span class="o">(</span>3.04s<span class="o">)</span>
+            --- PASS: TestPlatformRefAWS/Rendered/Managed_Resources/Did_create_XR <span class="o">(</span>0.00s<span class="o">)</span>
+PASS
+ok      github.com/vmware-tanzu/sonobuoy-plugins/examples/e2e-skeleton/pkg      3.546s
+</code></pre></div><p><em>NOTE</em>: If you&rsquo;re seeing warnings that &ldquo;Progress update attempted but no client
+available,&rdquo; that&rsquo;s just the tests attempting to notify a sonobuoy collector. We
+are not running a full Sonobuoy test yet. When we run in-cluster with <strong>sonobuoy
+run</strong>, these will go away.</p>
+<h4 id="renaming-the-suite">Renaming the suite</h4>
+<p>If you would like to rename the test, simply update the &lsquo;module&rsquo; name in go.mod.</p>
+<h3 id="step-five-table-driven-tests">Step Five: Table-Driven Tests</h3>
+<p>Crossplane <a href="https://github.com/crossplane/crossplane/blob/master/CONTRIBUTING.md">Contributing
+guidelines</a>
+make it clear: &ldquo;Crossplane encourages the use
+of table driven unit tests.&rdquo; At Upbound, we maintain our open source principles
+in-house, so let&rsquo;s make sure our tests honor the guidelines.</p>
+<p>I used
+<a href="https://www.gopherguides.com/articles/table-driven-testing-in-parallel">this</a>
+article as a guide.</p>
+<h4 id="importing-types-for-managed-resources">Importing Types for Managed Resources</h4>
+<p>Now that we have managed resources, we could easily import the <a href="https://github.com/crossplane/provider-aws/tree/master/apis">provider-aws
+types</a> and work
+with them. But for simplicity sake, I am going to keep using the
+GroupVersionKind of our resources to confirm they are created.</p>
+<h4 id="the-test-table">The Test Table</h4>
+<p>We&rsquo;re going to create a table of test cases to work with:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="o">...</span>
+	<span class="c1">// MRs we expect to be created by a Claim.
+</span><span class="c1"></span>	<span class="c1">// For the purpose of this demo, we only verify the existence of an MR in the cluster.
+</span><span class="c1"></span>	<span class="kd">var</span> <span class="nx">mrs</span> <span class="p">=</span> <span class="p">[]</span><span class="kd">struct</span> <span class="p">{</span>
+		<span class="nx">name</span>   <span class="kt">string</span>
+		<span class="nx">gvr</span>    <span class="nx">schema</span><span class="p">.</span><span class="nx">GroupVersionResource</span>
+		<span class="nx">suffix</span> <span class="kt">string</span>
+	<span class="p">}{</span>
+		<span class="p">{</span><span class="s">&#34;VPC&#34;</span><span class="p">,</span> <span class="nx">schema</span><span class="p">.</span><span class="nx">GroupVersionResource</span><span class="p">{</span><span class="nx">Group</span><span class="p">:</span> <span class="s">&#34;ec2.aws.crossplane.io.io&#34;</span><span class="p">,</span> <span class="nx">Version</span><span class="p">:</span> <span class="s">&#34;v1beta1&#34;</span><span class="p">,</span> <span class="nx">Resource</span><span class="p">:</span> <span class="s">&#34;vpcs&#34;</span><span class="p">},</span> <span class="s">&#34;&#34;</span><span class="p">},</span>
+		<span class="p">{</span><span class="s">&#34;InternetGateway&#34;</span><span class="p">,</span> <span class="nx">schema</span><span class="p">.</span><span class="nx">GroupVersionResource</span><span class="p">{</span><span class="nx">Group</span><span class="p">:</span> <span class="s">&#34;ec2.aws.crossplane.io&#34;</span><span class="p">,</span> <span class="nx">Version</span><span class="p">:</span> <span class="s">&#34;v1beta1&#34;</span><span class="p">,</span> <span class="nx">Resource</span><span class="p">:</span> <span class="s">&#34;internetgateways&#34;</span><span class="p">},</span> <span class="s">&#34;&#34;</span><span class="p">},</span>
+	<span class="p">}</span>
+	<span class="nx">f</span> <span class="o">:=</span> <span class="nx">features</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;Rendered&#34;</span><span class="p">).</span>
+<span class="o">...</span>
+</code></pre></div><p>Now, at the end of our Asses method, we can add a loop for these test cases:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang">			<span class="c1">// MR Test Case Runs
+</span><span class="c1"></span>			<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">mr</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">mrs</span> <span class="p">{</span>
+				<span class="nx">mr</span> <span class="o">:=</span> <span class="nx">mr</span> <span class="c1">// rebind mr into this lexical scope
+</span><span class="c1"></span>				<span class="nx">t</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">mr</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span> <span class="p">{</span>
+					<span class="nx">t</span><span class="p">.</span><span class="nf">Parallel</span><span class="p">()</span> <span class="c1">// We still want these to run in parallel
+</span><span class="c1"></span>
+					<span class="nx">got</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dynClient</span><span class="p">.</span><span class="nf">Resource</span><span class="p">(</span><span class="nx">mr</span><span class="p">.</span><span class="nx">gvr</span><span class="p">).</span><span class="nf">List</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">TODO</span><span class="p">(),</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">ListOptions</span><span class="p">{})</span>
+					<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+						<span class="nx">t</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;error retrieving %q: %q&#34;</span><span class="p">,</span> <span class="nx">mr</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+					<span class="p">}</span>
+
+					<span class="nx">count</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">got</span><span class="p">.</span><span class="nx">Items</span><span class="p">)</span>
+
+					<span class="k">if</span> <span class="nx">count</span> <span class="o">!=</span> <span class="nx">mr</span><span class="p">.</span><span class="nx">count</span> <span class="p">{</span>
+						<span class="nx">t</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;resource %q count is wrong.&#34;</span><span class="p">,</span> <span class="nx">mr</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
+					<span class="p">}</span>
+				<span class="p">})</span>
+
+			<span class="p">}</span>
+</code></pre></div><p><em>NOTE</em>: This is a terrible test, and when running in parallel, it will be easy
+to end up with more resources than we expect. In practice, I&rsquo;ve taken to
+generating deterministic names for my claims based on the claim id, so our
+internal tests can track down specific resources.</p>
+<h3 id="step-six-sonobuoy-run">Step Six: Sonobuoy Run</h3>
+<p>Now we&rsquo;re ready to build our container, load it into the cluster, and run
+Sonobuoy.</p>
+<p>You will need to enable buildx on your local docker, if you have not already.</p>
+<p>Quick and dirty:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">docker build -t &lt;container_name&gt;:&lt;container_tag&gt; ./
+kind load docker-image &lt;container_name&gt;:&lt;container_tag&gt;  --name sonobuoy-test
+sonobuoy run - plugin/plugin.yaml
+sonobuoy <span class="nb">wait</span>
+sonobuoy retrieve -f results.tar.gz
+sonobuoy results results.tar.gz --mode dump
+</code></pre></div><p>Your output should look something like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="w">
+</span><span class="w"></span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">custom-e2e</span><span class="w">
+</span><span class="w"></span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l">passed</span><span class="w">
+</span><span class="w"></span><span class="nt">meta</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">summary</span><span class="w">
+</span><span class="w"></span><span class="nt">items</span><span class="p">:</span><span class="w">
+</span><span class="w"></span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">out.json</span><span class="w">
+</span><span class="w">  </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l">passed</span><span class="w">
+</span><span class="w">  </span><span class="nt">meta</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="l">results/global/out.json</span><span class="w">
+</span><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">file</span><span class="w">
+</span><span class="w">  </span><span class="nt">items</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">TestPlatformRefAWS/Rendered/Managed_Resources/Did_create_XR</span><span class="w">
+</span><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l">passed</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">TestPlatformRefAWS/Rendered/Managed_Resources/InternetGateway</span><span class="w">
+</span><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l">passed</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">TestPlatformRefAWS/Rendered/Managed_Resources/SecurityGroup</span><span class="w">
+</span><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l">passed</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">TestPlatformRefAWS/Rendered/Managed_Resources/RouteTable</span><span class="w">
+</span><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l">passed</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">TestPlatformRefAWS/Rendered/Managed_Resources/Subnet</span><span class="w">
+</span><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l">passed</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">TestPlatformRefAWS/Rendered/Managed_Resources/VPC</span><span class="w">
+</span><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l">passed</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">TestPlatformRefAWS/Rendered/Managed_Resources</span><span class="w">
+</span><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l">passed</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">TestPlatformRefAWS/Rendered</span><span class="w">
+</span><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l">passed</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">TestPlatformRefAWS</span><span class="w">
+</span><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l">passed</span><span class="w">
+</span></code></pre></div><h3 id="the-finished-product">The Finished Product</h3>
+<p>this is what want to end up with.</p>
+<h2 id="useful-links">Useful Links</h2>
+<ul>
+<li><a href="https://sonobuoy.io/plugin-starter/">Skip the Boilerplate and Start Testing</a></li>
+<li><a href="https://github.com/vmware-tanzu/sonobuoy-plugins/tree/main/examples">Sonobouy-plugins Examples Repo</a></li>
+<li><a href="https://caiorcferreira.github.io/post/the-kubernetes-dynamic-client/">The Kubernetes Dynamic Client</a></li>
+<li><a href="https://trstringer.com/kubernetes-dynamic-client-go/">Unstructured Kubernetes Components with client-go&rsquo;s Dynamic Client</a></li>
+<li><a href="https://www.gopherguides.com/articles/table-driven-testing-in-parallel">Table Driven Testing in Parallel</a></li>
+<li><a href="https://crossplane.io/docs/v1.6/concepts/terminology.html#crossplane-terms">Crossplane Terminology</a></li>
+</ul>
+
+</div>
+
+    <div class="footer">
+  
+  <div class="footer-social">
+    
+      <span class="social-icon social-icon-twitter">
+        <a href="https://twitter.com/aaron_eaton" title="twitter" target="_blank" rel="noopener">
+          <img src="/images/social/twitter.svg" width="24" height="24" alt="twitter"/>
+        </a>
+      </span>
+    
+      <span class="social-icon social-icon-github">
+        <a href="https://github.com/AaronMe" title="github" target="_blank" rel="noopener">
+          <img src="/images/social/github.svg" width="24" height="24" alt="github"/>
+        </a>
+      </span>
+    
+      <span class="social-icon social-icon-linkedin">
+        <a href="https://www.linkedin.com/in/aaron-eaton-2018/" title="linkedin" target="_blank" rel="noopener">
+          <img src="/images/social/linkedin.svg" width="24" height="24" alt="linkedin"/>
+        </a>
+      </span>
+    
+  </div>
+  
+  <div class="footer-copyright">
+    <span class="copy">Copyright &copy; 2022 Aaron Eaton.</span>
+  </div>
+</div>
+  </div>
+
+  
+
+  
+
+  
+  <script type="text/javascript" src="/js/bundle.min.e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.js"></script>
+  
+
+  
+  
+
+  
+  
+  
+    
+      
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-B4RD5175XG"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-B4RD5175XG');
+      </script>
+    
+  
+
+
+</body>
+</html>

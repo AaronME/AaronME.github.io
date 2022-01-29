@@ -6,7 +6,17 @@
     <description>Recent content in Howdy on AaronEaton.com</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 14 Jan 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://aaroneaton.com/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 28 Jan 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://aaroneaton.com/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Using unstructured.Unstructured{} to read Composite Resources from Sonobuoy</title>
+      <link>https://aaroneaton.com/crossplane/crossplane-package-testing-with-sonobuoy/</link>
+      <pubDate>Fri, 28 Jan 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://aaroneaton.com/crossplane/crossplane-package-testing-with-sonobuoy/</guid>
+      <description>Testing with Sonobuoy Fresh off my exploration of kuttl I wanted to try out some other testing frameworks for our crossplane package workflows. As part of our open-source work on Crossplane, Upbound had recently published a conformance suite for validating crossplane and providers. That suite used the CNCF required sonobuoy to run e2e tests.
+Sonobuoy is &amp;ldquo;a diagnostic tool that makes it easier to understand the state of a Kubernetes cluster by running a choice of configuration tests in an accessible and non-destructive manner.</description>
+    </item>
+    
     <item>
       <title>TDD For Crossplane Packages with Skaffold</title>
       <link>https://aaroneaton.com/crossplane/crossplane-package-tdd-with-skaffold/</link>
