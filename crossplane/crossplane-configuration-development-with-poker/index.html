@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Teaching Crossplane to Play Poker - AaronEaton.com</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="https://aaroneaton.com/favicon.png">
+
+  
+  
+  <link rel="stylesheet" href="/css/style.min.b5edc2670fbb2e1948c6a17c1870576e18aad63dd2c4e445432feef7238f4ce4.css">
+  
+
+  
+    <meta name="description" content="Learn the Crossplane Resource Model by Teaching Crossplane to Play Poker"/>
+    <meta property="og:title" content="Teaching Crossplane to Play Poker"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="https://aaroneaton.com/crossplane/crossplane-configuration-development-with-poker/"/>
+    <meta property="og:image" content="https://aaroneaton.com/images/crossplane/crossplane-configuration-development-with-poker/poker-header.png"/>
+    <meta property="og:description" content="Learn the Crossplane Resource Model by Teaching Crossplane to Play Poker"/>
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:site" content="@aaron_eaton"/>
+    <meta name="twitter:creator" content="@aaron_eaton"/>
+  
+
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet"> 
+</head>
+
+
+
+
+<body class='page frame page-default-single'>
+  <div id="wrapper" class="wrapper">
+    <div class='header'>
+  <a class="header-logo" href="https://aaroneaton.com/">AaronEaton.com</a>
+  <div class="menu-main">
+    <ul>
+        
+        
+            <li class="menu-item-about">
+                <a href="/pages/about/">About</a>
+            </li>
+        
+            <li class="menu-item-crossplane">
+                <a href="/crossplane/">Crossplane</a>
+            </li>
+        
+    </ul>
+  </div>
+</div>
+    
+<div class="intro">
+  <h1>Teaching Crossplane to Play Poker<span class="dot">.</span></h1>
+  
+  <img src="/images/crossplane/crossplane-configuration-development-with-poker/poker-header.png" />
+  
+</div>
+
+<div class="content">
+  <h2 id="lets-teach-crossplane-to-play-poker">Let&rsquo;s Teach Crossplane to Play Poker</h2>
+<p>The <a href="https://www.amazon.com/dp/B002XHNNX4">Penguin Book of Card Games</a> lists over 250 games which can be played with a standard deck of playing cards. Most of those games don&rsquo;t require any changes to the deck. Blackjack, poker, gin, go fish, crazy eights, old maid&hellip; these games all use the same 4 suits of 13 ranks.</p>
+<p>When we start composing infrastructure with Crossplane, it&rsquo;s a lot like learning a new game with playing cards. We know the pieces. We know what they do. What we need to learn is how we&rsquo;re going to arrange them to play a new game.</p>
+<p>In this demo, I&rsquo;m going to walk through an example Crossplane Configuration
+Package Development Cycle. Along the way I&rsquo;m going to use some of <a href="https://aaroneaton.com/crossplane/crossplane-package-testing-with-kuttl/">the tools</a>
+I&rsquo;ve talked about in previous posts. And I&rsquo;m going to demystify some of the
+concepts around Crossplane Composition.</p>
+<p>I&rsquo;m going to do this by teaching Crossplane to Play Poker.</p>
+<h2 id="lets-get-started">Let&rsquo;s get Started!</h2>
+<p>You can find a complete example of this tutorial in the <a href="https://github.com/AaronME/ATourOfCrossplane/tree/main/crossplane-configuration-development-with-poker">A Tour of
+Crossplane</a>
+repo.</p>
+<h3 id="prerequisites">Prerequisites</h3>
+<p>We&rsquo;re going to assume you have the following installed:</p>
+<ul>
+<li><a href="https://kind.sigs.k8s.io/docs/user/quick-start/#installation">kind</a></li>
+<li><a href="https://cloud.upbound.io/docs/getting-started/install-and-setup">up</a></li>
+<li><a href="https://kubernetes.io/docs/tasks/tools/">kubectl</a></li>
+<li><a href="https://helm.sh/docs/intro/install/">helm</a></li>
+<li><a href="https://kuttl.dev">kuttl</a></li>
+</ul>
+<h3 id="provider-cards">Provider-Cards</h3>
+<p>To play a game, we need cards. We built a custom provider,
+<a href="https://github.com/aaronme/provider-cards">provider-cards</a>, which will give us
+a complete deck of standard playing cards to work with.</p>
+<p>We will install the provider when we install crossplane with a
+<strong>uxp-values.yaml</strong> file. We store this file under <strong>tests/</strong> so it can be
+re-used in our kuttl test bootstrapping:</p>
+<p><strong>tests/uxp-values.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">provider</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">packages</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="l">registry.upbound.io/aaroneaton/provider-cards:v0.0.1</span><span class="w">
+</span></code></pre></div><h3 id="set-up-a-casino">Set up a Casino</h3>
+<p>Launch a kind cluster and install crossplane:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">kind create cluster --name cards
+up uxp install -f tests/uxp-values.yaml
+</code></pre></div><h3 id="open-a-new-deck-and-give-it-a-shuffle">Open a New Deck and Give it a Shuffle</h3>
+<p>We open a new Deck by creating a ProviderConfig, and we shuffle it with a
+Secret. Every ProviderConfig represents a new set of 52 playing cards. The
+provider will only issue one card of each type (say, the ♥10) for each
+ProviderConfig.</p>
+<p>We aren&rsquo;t going into too much detail about Providers here. If you are looking
+for more information, take a look at the <a href="https://crossplane.io/docs/v1.6/concepts/providers.html">crossplane
+docs</a>.</p>
+<p>Apply the following manifests to get a new deck:</p>
+<p><strong>tests/init.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Secret</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">upbound-system</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w"></span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">Opaque</span><span class="w">
+</span><span class="w"></span><span class="nt">stringData</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">credentials</span><span class="p">:</span><span class="w"> </span><span class="p">|</span><span class="sd">
+</span><span class="sd">    </span><span class="w">    </span>{<span class="w"> </span><span class="nt">&#34;seed&#34;: </span><span class="m">1</span><span class="w"> </span>}<span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ProviderConfig</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">credentials</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l">Secret</span><span class="w">
+</span><span class="w">    </span><span class="nt">secretRef</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">upbound-system</span><span class="w">
+</span><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">      </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">credentials</span><span class="w">
+</span></code></pre></div><p>And apply it to your cluster:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">kubectl apply -f tests/init.yaml
+</code></pre></div><p>Now we can play with our cards.</p>
+<h3 id="lesson-one-cards-are-managed-resources">Lesson One: Cards are Managed Resources</h3>
+<p><img src="../../images/crossplane/crossplane-configuration-development-with-poker/managed-resource.png" alt="Cards are Managed Resources" title="Cards are Managed Resources"></p>
+<p>Crossplane is built to operate Managed Resources. Today, the Managed Resources
+we are going to use are Cards.</p>
+<p>Let&rsquo;s pull one card off the top of the deck:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">acard</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">  </span><span class="nt">providerConfigRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span></code></pre></div><p>You can check the value of <strong>acard</strong> by running the following:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">kubectl get card acard -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{@.status.atProvider.face}&#39;</span>        
+</code></pre></div><p>You should see <strong>♥10</strong> in your output. Because we declared the seed, we can
+predict the output. (Golang lists do not guarantee order, though, so if I&rsquo;m
+wrong&hellip; sorry.)</p>
+<p>You can deal more cards and see how they each behave. When you&rsquo;re ready, put all
+the cards back in the deck with:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">kind delete cluster --name cards
+</code></pre></div><h2 id="what-makes-a-crossplane-composition">What Makes a Crossplane Composition</h2>
+<p>Whether you&rsquo;re playing Poker, or Blackjack, or Solitaire the actual cards do not
+change. What changes is how the cards are moved around the table. How many cards
+are dealt to each player, which cards are showing, which cards are shared on the
+table. Is there a discard pile? Do we need to &ldquo;pass&rdquo; cards (as in Hearts)?</p>
+<p>These are the rules of the Game. When we understand and agree on the rules of
+the game, we can build tools that make playing the game easier and more fun.</p>
+<p>Let&rsquo;s make sure we all know and agree on the game we are playing.</p>
+<h3 id="the-rules-of-poker-texas-holdem-style">The Rules of Poker (Texas Hold&rsquo;em Style)</h3>
+<p>Texas Hold&rsquo;em is played in four rounds. In each round, we are going to deliver new
+cards to the table.</p>
+<p>This is what a game of Texas Hold&rsquo;em looks like:</p>
+<ol>
+<li>Players sit at the table and request <strong>a hand</strong>. <strong>A Hand</strong> is made up of two
+cards. Players can only see their own cards (no cards are face up).</li>
+<li>Once all players have their hand, the dealer will deal <strong>the flop</strong>. <strong>The
+Flop</strong> is made up of one burned card (not shown to anyone at the table) and
+three face-up cards on the table. All players can view the faces of <strong>the
+flop</strong>.</li>
+<li>After a round of betting, the dealer will deal <strong>the turn</strong>. <strong>The Turn</strong> is
+made up of one burned card and one face-up card. Again, all players can see
+the face of <strong>the turn</strong>.</li>
+<li>After another round of betting, the dealer will deal <strong>the river</strong>. <strong>The
+River</strong> is made up of one burned card and one face-up card. All players can
+see the face of <strong>the river</strong>.</li>
+</ol>
+<p>In the steps above I have highlights all of the objects which are made out of
+cards. These objects represent Composite Resources, which we will build in the
+next section.</p>
+<p>The Composite Resources we are going to build are:</p>
+<ul>
+<li>A Player Hand (2 private cards for each player)</li>
+<li>The Flop (1 burned card, 3 shared cards)</li>
+<li>The Turn (1 burned card, 1 shared card)</li>
+<li>The River (1 burned card, 1 shared card)</li>
+</ul>
+<h3 id="how-do-we-bet">How do we bet?</h3>
+<p>We do not bet with cards. In order to implement Composites for betting, we would
+need <strong>provider-chips</strong> or <strong>provider-toothpicks</strong>. For now, we&rsquo;ll assume our
+players are betting by some other means.</p>
+<h3 id="what-about-scoring">What about scoring?</h3>
+<p>We do not score with cards, either. In this demo, we are assuming everyone is
+familiar with the rules of poker, and we want to make it faster and easier for
+them to play it.</p>
+<p>Whether a straight-flush beats a full-house is something the players will need
+to agree on.</p>
+<p>Let&rsquo;s start building our game.</p>
+<h2 id="a-playerhand-is-a-composite-resource">A PlayerHand is a Composite Resource</h2>
+<p><img src="../../images/crossplane/crossplane-configuration-development-with-poker/composite-hand.png" alt="PlayerHands are Composite Resources" title="PlayerHands are Composite Resources"></p>
+<p>A Composite Resource is container for multiple other Resources. It can contain
+Managed Resources from a provider, managed resources from non-Crossplane
+controllers, or native Kubernetes resources (pods, configMaps, etc).</p>
+<p>In shorthand we often refer to Composite Resources as &ldquo;XRs&rdquo;.</p>
+<h3 id="we-start-by-defining-the-output">We Start by Defining the Output</h3>
+<p>The PlayerHand Composite will generate 2 private cards that only the player can
+see.</p>
+<p>The private Cards will be created at Cluster-Scope, but their Face values will
+be added to a secret in the Player&rsquo;s Namespace.</p>
+<p>Let&rsquo;s create a kuttl test which defines this output:</p>
+<p><strong>tests/playerhand/00-assert.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestAssert</span><span class="w">
+</span><span class="w"></span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="m">30</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">playerone-01</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">  </span><span class="nt">providerConfigRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">playerone-02</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">  </span><span class="nt">providerConfigRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Secret</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">my-cards</span><span class="w">
+</span><span class="w"></span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">connection.crossplane.io/v1alpha1</span><span class="w">
+</span></code></pre></div><p><strong>Note</strong>: The Secret in our test-case does not have a Namespace. That is because
+kuttl will automatically generate a namespace for the test and will only find
+the secret within that same namespace.</p>
+<h3 id="define-the-input">Define the Input</h3>
+<p>The goal of a Composite is to place many Resources behind a single, custom
+resource. So we will define what that custom resource looks like as an input to
+our test case.</p>
+<p>Looking at the output, we identify some pieces of information the player needs
+to supply. We see:</p>
+<ul>
+<li>&lsquo;playerone&rsquo; in the names of the cards.</li>
+<li>&lsquo;tour&rsquo; in the ProviderConfig names.</li>
+<li>&lsquo;my-cards&rsquo; as the name of the Secret.</li>
+</ul>
+<p>&lsquo;Playerone&rsquo; is obviously the player name. And the providerConfig creates
+different decks, so let&rsquo;s assume that &lsquo;tour&rsquo; is the name of the deck our player
+wishes to play from. Let&rsquo;s call that the &ldquo;table&rdquo; the player wishes to sit at.</p>
+<p>So we need <strong>playerName</strong> and <strong>tableName</strong> parameters in our XR.</p>
+<p>The Secret is of type <strong>type: connection.crossplane.io/v1alpha1</strong>. This means it
+was written by Crossplane. We will let players define their own secret name
+using the <strong>writeConnectionSecretToRef</strong> field.</p>
+<p>Our target Composite look like this:</p>
+<p><strong>tests/playerhand/00-playerhand.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">PlayerHand</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">my-hand</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">playerName</span><span class="p">:</span><span class="w"> </span><span class="l">playerone</span><span class="w">
+</span><span class="w">  </span><span class="nt">tableName</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">  </span><span class="nt">writeConnectionSecretToRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">my-cards</span><span class="w">
+</span></code></pre></div><p>Now we know our inputs and our outputs. Let&rsquo;s teach Crossplane how to build our
+composition.</p>
+<h3 id="define-the-crossplane-resource-definition">Define the Crossplane Resource Definition</h3>
+<p>A composite is made up of two files. The first file is called the Composite
+Resource Definition, or XRD for short.</p>
+<p>If you have worked with <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/">Custom Resource
+Definitions</a>
+before, you&rsquo;ll be familiar with Composite Resource Definitions. They define the
+parameters from our input above.</p>
+<p>Create a <strong>package/playerhand</strong> folder and add this file:</p>
+<p><strong>package/playerhand/definition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apiextensions.crossplane.io/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">CompositeResourceDefinition</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="c"># The name must match &#34;spec.names.plural + . + spec.group&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">playerhands.cardgames.aaroneaton.com</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="c"># This group name is entirely up to you. Including your domain protects you</span><span class="w">
+</span><span class="w">  </span><span class="c"># from colliding with another composition with a similar group name.</span><span class="w">
+</span><span class="w">  </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com</span><span class="w">
+</span><span class="w">  </span><span class="nt">names</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">PlayerHand</span><span class="w"> </span><span class="c"># This is the Composite Resource Name</span><span class="w">
+</span><span class="w">    </span><span class="nt">plural</span><span class="p">:</span><span class="w"> </span><span class="l">playerhands</span><span class="w"> </span><span class="c"># This is the plural of the Composite Resource Name</span><span class="w">
+</span><span class="w">  </span><span class="nt">versions</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">v1alpha1</span><span class="w"> </span><span class="c"># You can support multiple versions</span><span class="w">
+</span><span class="w">      </span><span class="nt">served</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">referenceable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">schema</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">openAPIV3Schema</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">object</span><span class="w">
+</span><span class="w">          </span><span class="nt">properties</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">              </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">object</span><span class="w">
+</span><span class="w">              </span><span class="nt">properties</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span></code></pre></div><p>This is the boilerplate for our Composite. Now, let&rsquo;s add the parameter fields
+we set in our test input:</p>
+<p><strong>package/playerhand/definition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">...</span><span class="w">
+</span><span class="w">  </span><span class="nt">versions</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">v1alpha1</span><span class="w"> </span><span class="c"># You can support multiple versions</span><span class="w">
+</span><span class="w">      </span><span class="nt">served</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">referenceable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">schema</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">openAPIV3Schema</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">object</span><span class="w">
+</span><span class="w">          </span><span class="nt">properties</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">              </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">object</span><span class="w">
+</span><span class="w">              </span><span class="nt">properties</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">playerName</span><span class="p">:</span><span class="w">
+</span><span class="w">                  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">                  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Name of Player holding this Hand</span><span class="w">
+</span><span class="w">                </span><span class="nt">tableName</span><span class="p">:</span><span class="w">
+</span><span class="w">                  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">                  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Name of Table for this Hand</span><span class="w">
+</span><span class="w">              </span><span class="nt">required</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span>- <span class="l">playerName</span><span class="w">
+</span><span class="w">                </span>- <span class="l">tableName</span><span class="w">
+</span></code></pre></div><p>We marked both of these fields &ldquo;required.&rdquo; This means that anyone trying to
+submit a PlayerHand without those fields will get a rejection at the client
+level. This is faster than watching for the error in Crossplane logs.</p>
+<p>Notice that <strong>versions</strong> is a list. You can serve multiple versions of your
+Composite. This is useful if you need to add fields later. Just remember that
+only one version can be the &ldquo;storage&rdquo; version. And it will need to support every
+field that every other version might need.</p>
+<h3 id="creating-claims">Creating Claims</h3>
+<p>Earlier we mentioned that Managed Resources were Cluster-Scoped. Well, so are
+Composite Resources. In order to grant Players the right to request PlayerHands,
+we must enable them as Composite Resource Claims (or XRC for short).</p>
+<p>When a player makes a &ldquo;claim,&rdquo; Crossplane will create a matching Composite
+Resource and deliver the Secrets for that resource to the Claim&rsquo;s namespace.</p>
+<p>To enable Claims, add <strong>claimNames</strong> to your XRD:</p>
+<p><strong>package/playerhand/definition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apiextensions.crossplane.io/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">CompositeResourceDefinition</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="c"># The name must match &#34;spec.names.plural + . + spec.group&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">playerhands.cardgames.aaroneaton.com</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">claimNames</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DealMeIn</span><span class="w">
+</span><span class="w">    </span><span class="nt">plural</span><span class="p">:</span><span class="w"> </span><span class="l">dealmeins</span><span class="w">
+</span><span class="w">  </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com</span><span class="w">
+</span><span class="w">  </span><span class="nt">names</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">PlayerHand</span><span class="w"> </span><span class="c"># This is the Composite Resource Name</span><span class="w">
+</span><span class="w">    </span><span class="nt">plural</span><span class="p">:</span><span class="w"> </span><span class="l">playerhands</span><span class="w"> </span><span class="c"># This is the plural of the Composite Resource Name</span><span class="w">
+</span></code></pre></div><p>Wait! How can the Composite be called &ldquo;PlayerHand&rdquo; but the Claim is called
+&ldquo;DealMeIn?&rdquo;</p>
+<p>Because Claim Names do not have to have anything to do with their Composites.
+This is actually a great way to help Players and Admins. Players can be given
+Claim Names that are meaningful to their side of a task, while Admins get to see
+Composite Names that are descriptive and meaningful to them.</p>
+<p>Just as we used &ldquo;tableName&rdquo; to set the ProviderConfig value, we are using the
+Claim Name to make the process <em>easier on the player</em>_. Our goal is to make
+playing the game easier and fun.</p>
+<p>Let&rsquo;s go back and update our test to use the Claim instead of the Composite:</p>
+<p><strong>tests/playerhand.00-playerhand.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DealMeIn</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">my-hand</span><span class="w">
+</span><span class="w"></span><span class="nn">...</span><span class="w">
+</span></code></pre></div><p>Because the cards are being created at the cluster-scope, the only way players
+will be able to see the values of their cards is via a <strong>connectionSecret</strong>.
+This secret will exist only in the player&rsquo;s namespace, safe from the prying eyes
+of their competitor.</p>
+<h3 id="defining-connectionsecrets">Defining ConnectionSecrets</h3>
+<p>The Players are expecting a secret with the Face Values of 2 cards in it. We
+define these Secret Keys in the definition:</p>
+<p><strong>package/playerhand/definition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">...</span><span class="w">
+</span><span class="w">  </span><span class="nt">names</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">PlayerHand</span><span class="w">
+</span><span class="w">    </span><span class="nt">plural</span><span class="p">:</span><span class="w"> </span><span class="l">playerhands</span><span class="w">
+</span><span class="w">  </span><span class="nt">connectionSecretKeys</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;01&#34;</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;02&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">versions</span><span class="p">:</span><span class="w">
+</span><span class="w"></span><span class="nn">...</span><span class="w">
+</span></code></pre></div><p>Our final XRD looks like this:</p>
+<p><strong>package/playerhand/definition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apiextensions.crossplane.io/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">CompositeResourceDefinition</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">playerhands.cardgames.aaroneaton.com</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">claimNames</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DealMeIn</span><span class="w">
+</span><span class="w">    </span><span class="nt">plural</span><span class="p">:</span><span class="w"> </span><span class="l">dealmeins</span><span class="w">
+</span><span class="w">  </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com</span><span class="w">
+</span><span class="w">  </span><span class="nt">names</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">PlayerHand</span><span class="w">
+</span><span class="w">    </span><span class="nt">plural</span><span class="p">:</span><span class="w"> </span><span class="l">playerhands</span><span class="w">
+</span><span class="w">  </span><span class="nt">connectionSecretKeys</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;01&#34;</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;02&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">versions</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">v1alpha1</span><span class="w">
+</span><span class="w">      </span><span class="nt">served</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">referenceable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">schema</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">openAPIV3Schema</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">object</span><span class="w">
+</span><span class="w">          </span><span class="nt">properties</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">              </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">object</span><span class="w">
+</span><span class="w">              </span><span class="nt">properties</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">playerName</span><span class="p">:</span><span class="w">
+</span><span class="w">                  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">                  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Name of Player holding this Hand</span><span class="w">
+</span><span class="w">                </span><span class="nt">tableName</span><span class="p">:</span><span class="w">
+</span><span class="w">                  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">                  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Name of Table for this Hand</span><span class="w">
+</span><span class="w">              </span><span class="nt">required</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span>- <span class="l">playerName</span><span class="w">
+</span><span class="w">                </span>- <span class="l">tableName</span><span class="w">
+</span></code></pre></div><p>Now we have the XRD and the Test. Let&rsquo;s write the actual Composition!</p>
+<h3 id="composing-our-playerhand">Composing our PlayerHand</h3>
+<p>The second half of making a Composite is the Composition.</p>
+<p>Actually, this can be the Second, Third, Fourth, Fifth&hellip; any number of halfs.
+Because you can have <em>multiple</em> Compositions for a single Composite.</p>
+<p>You can have a &ldquo;Poker&rdquo; composition for PlayerHand. Or a &ldquo;Blackjack&rdquo; composition.
+Most of these compositions require the same input (playerName and tableName) and
+not much else. So why not reUse a Composite that is working for us?</p>
+<p>We&rsquo;ll cover label selectors and multiple compositions at another time. For now,
+we will focus on the poker composition alone.</p>
+<p><strong>package/playerhand/composition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apiextensions.crossplane.io/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Composition</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">playerhand-composition</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="c"># This field is necessary, the Claim will copy secrets from this namespace</span><span class="w">
+</span><span class="w">  </span><span class="nt">writeConnectionSecretsToNamespace</span><span class="p">:</span><span class="w"> </span><span class="l">upbound-system</span><span class="w">
+</span><span class="w">  </span><span class="nt">compositeTypeRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">PlayerHand</span><span class="w">
+</span><span class="w">  </span><span class="nt">resources</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w">
+</span></code></pre></div><p>The <strong>metadata.name</strong>  can be anything you like. You will see many packages that
+continue to use <a href="https://github.com/upbound/platform-ref-aws/blob/a386174f05e6a99a16afe29bedb06e3e34535f78/cluster/composition.yaml#L4">the api group</a>
+in the composition name. This is a strong convention, but is not a requirement.</p>
+<p>Managed Resources are added to our composition as <strong>bases</strong>.</p>
+<p>Let&rsquo;s add our first card to the list of resources. Start by just dropping in the
+Resource as it is defined in our test:</p>
+<p><strong>package/playerhand/composition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">...</span><span class="w">
+</span><span class="w">  </span><span class="nt">resources</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">base</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w">        </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w">        </span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">playerone-01</span><span class="w">
+</span><span class="w">        </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">          </span><span class="nt">providerConfigRef</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span></code></pre></div><p>We want the <strong>face</strong> value of the card delivered to our connection secret, so we
+add those fields next:</p>
+<p><strong>package/playerhand/composition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">...</span><span class="w">
+</span><span class="w">          </span><span class="nt">providerConfigRef</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">      </span><span class="nt">connectionDetails</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">FromFieldPath</span><span class="w">
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;01&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">status.atProvider.face</span><span class="w">
+</span></code></pre></div><p>This only works because the XRD already contains the &ldquo;01&rdquo; connectionSecretKey.</p>
+<p><strong>Note</strong>: provider-cards resources do not export any connection secrets on their
+own. If they did, those keys would automatically be added to the Composite. But
+keys copied from a status field, like above, need to be declared</p>
+<p>Now we need to set the table name parameter the user will supply as the
+providerConfigRef.name field. We do this with a patch]:</p>
+<p><strong>package/playerhand/composition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">...</span><span class="w">
+</span><span class="w">      </span><span class="nt">connectionDetails</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">FromFieldPath</span><span class="w">
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;01&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">status.atProvider.face</span><span class="w">
+</span><span class="w">      </span><span class="nt">patches</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.providerConfigRef.name</span><span class="w">
+</span></code></pre></div><p>And lastly, we need to patch in the player name. To meet the requirements of the
+test, we need to transform the player name into the card name by appending &ldquo;-01&rdquo;
+to it. Crossplane has a
+<a href="https://crossplane.io/docs/v1.6/reference/composition.html#transform-types">function</a>
+specifically for this.</p>
+<p><strong>package/playerhand/composition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">...</span><span class="w">
+</span><span class="w">      </span><span class="nt">patches</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.playerName</span><span class="w">
+</span><span class="w">          </span><span class="nt">transforms</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">              </span><span class="nt">string</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">fmt</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;%s-01&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">metadata.name</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.providerConfigRef.name</span><span class="w">
+</span></code></pre></div><p>Because we have patched the metadata.name field and the providerConfigRef.name
+field, we can remove them from the composition. This is good practice for
+required fields which do not need a default value.</p>
+<p>We repeat the base and patches for Card 02, and the final Composition looks like
+this:</p>
+<p><strong>package/playerhand/composition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apiextensions.crossplane.io/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Composition</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">playerhand-composition</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">compositeTypeRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">PlayerHand</span><span class="w">
+</span><span class="w">  </span><span class="nt">resources</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">base</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w">        </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w">        </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">      </span><span class="nt">connectionDetails</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">FromFieldPath</span><span class="w">
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;01&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">status.atProvider.face</span><span class="w">
+</span><span class="w">      </span><span class="nt">patches</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.playerName</span><span class="w">
+</span><span class="w">          </span><span class="nt">transforms</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">              </span><span class="nt">string</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">fmt</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;%s-01&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">metadata.name</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.providerConfigRef.name</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">base</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w">        </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w">        </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">      </span><span class="nt">connectionDetails</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">FromFieldPath</span><span class="w">
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;02&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">status.atProvider.face</span><span class="w">
+</span><span class="w">      </span><span class="nt">patches</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.playerName</span><span class="w">
+</span><span class="w">          </span><span class="nt">transforms</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">              </span><span class="nt">string</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">fmt</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;%s-02&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">metadata.name</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.providerConfigRef.name</span><span class="w">
+</span></code></pre></div><h3 id="finalize-the-test">Finalize the Test</h3>
+<p>Now that our Composite Definition exists, we&rsquo;ll need to apply it in our test
+case:</p>
+<p><strong>tests/playerhand/00-playerhand.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestStep</span><span class="w">
+</span><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="c"># Install XRDs</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl apply -f &#34;${PWD}/package/playerhand/&#34;</span><span class="w">
+</span><span class="w">  </span><span class="c"># Wait for XRD to become &#34;established&#34;</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=established --timeout=20s xrd/playerhands.cardgames.aaroneaton.com</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DealMeIn</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">my-hand</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">playerName</span><span class="p">:</span><span class="w"> </span><span class="l">playerone</span><span class="w">
+</span><span class="w">  </span><span class="nt">tableName</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">  </span><span class="nt">writeConnectionSecretToRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">my-cards</span><span class="w">
+</span></code></pre></div><p>If you didn&rsquo;t do it already, set up the Kuttl TestSuite file in the root of the
+repo:</p>
+<p><strong>kuttl-test.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
+</span><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.6.3-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml</span><span class="w">
+</span><span class="w">  </span><span class="c"># Wait for provider-cards to become healthy.</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=healthy  --timeout=300s provider/aaroneaton-provider-cards</span><span class="w">
+</span><span class="w">  </span><span class="c"># Set up a table for play</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl apply -f &#34;${PWD}/tests/init.yaml&#34;</span><span class="w">
+</span><span class="w"></span><span class="nt">testDirs</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="l">tests/</span><span class="w">
+</span><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
+</span><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></code></pre></div><p>Try your test:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">kubectl kuttl <span class="nb">test</span>
+</code></pre></div><p>It worked! Let&rsquo;s add more resources!</p>
+<h2 id="the-flop-is-_also_-a-composite-resource">The Flop is <em>also</em> A Composite Resource</h2>
+<p><img src="../../images/crossplane/crossplane-configuration-development-with-poker/composite-flop.png" alt="TheFlops are Composite Resources" title="TheFlops are Composite Resources"></p>
+<p>TheFlop Composite will generate 4 private cards.</p>
+<p>One of the cards will be &ldquo;burned&rdquo; and not shown to anyone. The other three will
+be placed &ldquo;face up&rdquo; &ndash; their values will be added to a secret in a shared
+namespace for all players to view.</p>
+<h3 id="define-the-output">Define the Output</h3>
+<p>We add a test case for the four cards and secret.</p>
+<p><strong>tests/theflop/00-assert.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestAssert</span><span class="w">
+</span><span class="w"></span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="m">30</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour-flop-burn</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">  </span><span class="nt">providerConfigRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour-flop-01</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">  </span><span class="nt">providerConfigRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour-flop-02</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">  </span><span class="nt">providerConfigRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour-flop-03</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">  </span><span class="nt">providerConfigRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Secret</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">flop-cards</span><span class="w">
+</span><span class="w"></span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">connection.crossplane.io/v1alpha1</span><span class="w">
+</span></code></pre></div><h3 id="define-the-input-1">Define the Input</h3>
+<p>We already know this is going to have a Claim Name, so we&rsquo;ll use it.</p>
+<p><strong>tests/theflop/00-theflop.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestStep</span><span class="w">
+</span><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="c"># Install XRDs</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl apply -f &#34;${PWD}/package/theflop/&#34;</span><span class="w">
+</span><span class="w">  </span><span class="c"># Wait for XRD to become &#34;established&#34;</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=established --timeout=20s xrd/theflops.cardgames.aaroneaton.com</span><span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DealTheFlop</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">tableName</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">  </span><span class="nt">writeConnectionSecretToRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">flop-cards</span><span class="w">
+</span></code></pre></div><p>We don&rsquo;t need playerName here. The cards will be written to a shared namespace,
+and a &ldquo;Dealer&rdquo; will need to actually create <strong>DealTheFlop</strong> in that namespace.</p>
+<h3 id="isnt-provider-cards-the-dealer">Isn&rsquo;t Provider-Cards the Dealer?</h3>
+<p>Nope, provider-cards is the deck.</p>
+<h3 id="define-theflop-xrd-and-compositions">Define TheFlop XRD and Compositions</h3>
+<p>There are only a few changes to the Definition file.</p>
+<p>Mainly, we are declaring 2 connectionSecretKeys instead of 3. (We are not adding
+4, because that fourth card is &ldquo;burned&rdquo; and not meant to be shown):</p>
+<p><strong>package/theflop/definition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apiextensions.crossplane.io/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">CompositeResourceDefinition</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">theflops.cardgames.aaroneaton.com</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">claimNames</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DealTheFlop</span><span class="w">
+</span><span class="w">    </span><span class="nt">plural</span><span class="p">:</span><span class="w"> </span><span class="l">dealtheflops</span><span class="w">
+</span><span class="w">  </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com</span><span class="w">
+</span><span class="w">  </span><span class="nt">names</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TheFlop</span><span class="w">
+</span><span class="w">    </span><span class="nt">plural</span><span class="p">:</span><span class="w"> </span><span class="l">theflops</span><span class="w">
+</span><span class="w">  </span><span class="nt">connectionSecretKeys</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;01&#34;</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;02&#34;</span><span class="w">
+</span><span class="w">    </span>- <span class="s2">&#34;03&#34;</span><span class="w">
+</span><span class="w">  </span><span class="nt">versions</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">v1alpha1</span><span class="w">
+</span><span class="w">      </span><span class="nt">served</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">referenceable</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span><span class="nt">schema</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">openAPIV3Schema</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">object</span><span class="w">
+</span><span class="w">          </span><span class="nt">properties</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">              </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">object</span><span class="w">
+</span><span class="w">              </span><span class="nt">properties</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">tableName</span><span class="p">:</span><span class="w">
+</span><span class="w">                  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">                  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l">Name of Table for this Flop</span><span class="w">
+</span><span class="w">              </span><span class="nt">required</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span>- <span class="l">tableName</span><span class="w">
+</span></code></pre></div><p>The Composition for TheFlop does not include the playerName patch, but it still
+generates names based on the name of the Claim:</p>
+<p><strong>package/theflop/composition.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apiextensions.crossplane.io/v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Composition</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">theflop-composition</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">writeConnectionSecretsToNamespace</span><span class="p">:</span><span class="w"> </span><span class="l">upbound-system</span><span class="w">
+</span><span class="w">  </span><span class="nt">compositeTypeRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TheFlop</span><span class="w">
+</span><span class="w">  </span><span class="nt">resources</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">base</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w">        </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w">        </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">      </span><span class="c"># this burned card is _not_ added to the connectionSecrets</span><span class="w">
+</span><span class="w">      </span><span class="nt">patches</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">transforms</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">              </span><span class="nt">string</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">fmt</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;%s-flop-burn&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">metadata.name</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.providerConfigRef.name</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">base</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w">        </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w">        </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">      </span><span class="nt">connectionDetails</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">FromFieldPath</span><span class="w">
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;01&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">status.atProvider.face</span><span class="w">
+</span><span class="w">      </span><span class="nt">patches</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">transforms</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">              </span><span class="nt">string</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">fmt</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;%s-flop-01&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">metadata.name</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.providerConfigRef.name</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">base</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w">        </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w">        </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">      </span><span class="nt">connectionDetails</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">FromFieldPath</span><span class="w">
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;02&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">status.atProvider.face</span><span class="w">
+</span><span class="w">      </span><span class="nt">patches</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">transforms</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">              </span><span class="nt">string</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">fmt</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;%s-flop-02&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">metadata.name</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.providerConfigRef.name</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">base</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">providercards.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w">        </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Card</span><span class="w">
+</span><span class="w">        </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">forProvider</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w">      </span><span class="nt">connectionDetails</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">FromFieldPath</span><span class="w">
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;03&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">status.atProvider.face</span><span class="w">
+</span><span class="w">      </span><span class="nt">patches</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">transforms</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">string</span><span class="w">
+</span><span class="w">              </span><span class="nt">string</span><span class="p">:</span><span class="w">
+</span><span class="w">                </span><span class="nt">fmt</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;%s-flop-03&#34;</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">metadata.name</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">fromFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.tableName</span><span class="w">
+</span><span class="w">          </span><span class="nt">toFieldPath</span><span class="p">:</span><span class="w"> </span><span class="l">spec.providerConfigRef.name</span><span class="w">
+</span></code></pre></div><h3 id="testing-theflop">Testing TheFlop</h3>
+<p>Run your tests again to confirm everything is working.</p>
+<h2 id="the-turn-and-the-river-are-_also_-composite-resources">The Turn and the River are <em>also</em> Composite Resources</h2>
+<p><img src="../../images/crossplane/crossplane-configuration-development-with-poker/composite-turn-river.png" alt="TheTurns are Composite Resources" title="TheTurns are Composite Resources"> <img src="../../images/crossplane/crossplane-configuration-development-with-poker/composite-turn-river.png" alt="TheRivers are Composite Resources" title="TheRivers are Composite Resources"></p>
+<p>You can now make two more composites.</p>
+<p>These are almost identical to <strong>TheFlop</strong>, except each plays only 1 face-up card
+instead of 3. Go ahead and create your test cases, XRDs and Compositions for
+<strong>TheTurn</strong> (claimName &ldquo;DealTheTurn&rdquo;) and <strong>TheRiver</strong> (claimName &ldquo;DealTheRiver&rdquo;).</p>
+<p>Make sure your tests are passing:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">kubectl kuttl <span class="nb">test</span>
+...
+--- PASS: kuttl <span class="o">(</span>114.33s<span class="o">)</span>
+    --- PASS: kuttl/harness <span class="o">(</span>0.00s<span class="o">)</span>
+        --- PASS: kuttl/harness/playerhand <span class="o">(</span>5.87s<span class="o">)</span>
+        --- PASS: kuttl/harness/theriver <span class="o">(</span>6.46s<span class="o">)</span>
+        --- PASS: kuttl/harness/theturn <span class="o">(</span>7.30s<span class="o">)</span>
+        --- PASS: kuttl/harness/theflop <span class="o">(</span>7.47s<span class="o">)</span>
+</code></pre></div><p>If you get the above output you&rsquo;re ready to play some Poker!</p>
+<h2 id="this-is-how-to-play-poker-with-crossplane">This is How to Play Poker with Crossplane</h2>
+<p>Start a cluster, install <strong>provider-cards</strong> and your <strong>composites</strong>. Remember to
+provision a credential secret and your <strong>providerConfig</strong>.</p>
+<h3 id="round-one-deal-the-hand">Round One: Deal the Hand</h3>
+<p>Create a set of users, or ask several colleagues to join you on a cluster. Make
+sure each of them can only see their own namespace and the shared &ldquo;table&rdquo;
+namespace.</p>
+<p>Every player in the game will create a <strong>DealMeIn</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DealMeIn</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">my-hand</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;player namespace&gt;</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">playerName</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;player-name&gt;</span><span class="w">
+</span><span class="w">  </span><span class="nt">tableName</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;providerConfig name&gt;</span><span class="w">
+</span><span class="w">  </span><span class="nt">writeConnectionSecretToRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">my-cards</span><span class="w">
+</span></code></pre></div><h3 id="round-two-deal-the-flop">Round Two: Deal the Flop</h3>
+<p>Next, whoever is the dealer will create a <strong>DealTheFlop</strong> in the shared
+namespace:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DealTheFlop</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;shared namespace&gt;</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">tableName</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;providerConfig name&gt;</span><span class="w">
+</span><span class="w">  </span><span class="nt">writeConnectionSecretToRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">flop-cards</span><span class="w">
+</span></code></pre></div><p>Players can investigate TheFlop by running:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl get secret flop-cards -n &lt;shared namespace&gt; -o yaml
+</code></pre></div><p>Players may bet by another means. When everyone has folded or called&hellip;</p>
+<h3 id="round-three-deal-the-turn">Round Three: Deal the Turn</h3>
+<p>The dealer creates a <strong>DealTheTurn</strong> in the shared namespace:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DealTheTurn</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;shared namespace&gt;</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">tableName</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;providerConfig name&gt;</span><span class="w">
+</span><span class="w">  </span><span class="nt">writeConnectionSecretToRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">turn-card</span><span class="w">
+</span></code></pre></div><p>Players can investigate TheTurn by running:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl get secret turn-card -n &lt;shared namespace&gt; -o yaml
+</code></pre></div><p>Players bet again. When everyone has folded or called&hellip;</p>
+<h3 id="round-four-deal-the-river">Round Four: Deal the River</h3>
+<p>The dealer creates a <strong>DealTheRiver</strong> in the shared namespace:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DealTheTurn</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">tour</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;shared namespace&gt;</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">tableName</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;providerConfig name&gt;</span><span class="w">
+</span><span class="w">  </span><span class="nt">writeConnectionSecretToRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">river-card</span><span class="w">
+</span></code></pre></div><p>Players can investigate TheRiver by running:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl get secret river-card -n &lt;shared namespace&gt; -o yaml
+</code></pre></div><h3 id="how-do-i-stop-someone-from-cheating">How do I stop someone from cheating?</h3>
+<p>RBAC Controls and &ldquo;Pit Bosses.&rdquo;</p>
+<p>Your players should only have the ability to create the Claims for the Composites we
+are building. Since the actual cards are Cluster-Scoped (like all managed
+resources), working directly with cards requires admin privileges. Your Players
+should not be admins. They only have access in their own namespace
+and the shared &ldquo;table&rdquo; namespace.</p>
+<p>Meanwhile, cluster administrators can see every card at the table. So if a player
+somehow manages to pull a card directly the cluster administrators would see
+it happen and intervene.</p>
+<p>Let&rsquo;s get back to the demo.</p>
+<h3 id="an-imperfect-endgame">An Imperfect Endgame</h3>
+<p>Now it is time for everyone left to <em>show</em> their cards.</p>
+<p>Crossplane Compositions really aren&rsquo;t intended for &ldquo;sharing&rdquo; information. The
+design originally assumed that everyone who created infrastructure wanted to
+<em>own</em> that infrastructure and there was little need for community access.</p>
+<p>In practice, teams often create message queues or share data buckets to
+facilitate communication. When this happens the owning team wants to share
+connection secrets into another team&rsquo;s namespace.</p>
+<p>I&rsquo;ve opened an issue on <a href="https://github.com/crossplane/crossplane/issues/2929">the crossplane
+repo</a> to provide this
+functionality.  This has some significant security implications, of course.</p>
+<p>For now, here is my imperfect &ldquo;workaround&rdquo; that will allow the game to complete:</p>
+<p>Grant The Dealer access to edit the PlayerHands.</p>
+<p>When everyone has called, the dealer will edit the hand of everyone still in the
+game, changing the name and target of the name and namespace of the
+<strong>writeConnectionSecretToRef</strong> field.</p>
+<p>If The Deal needs to know the name of a player, it is shown in the
+<strong>crossplane.io/composite</strong> annotation on any of a player&rsquo;s cards.</p>
+<p>If the annotation on <strong>playerone&rsquo;s</strong> card is
+&ldquo;crossplane.io/composite=my-hand-blm2v&rdquo;, then:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">cardgames.aaroneaton.com/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">PlayerHand</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">my-hand-blm2v</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">playerName</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;player-name&gt;</span><span class="w">
+</span><span class="w">  </span><span class="nt">tableName</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;providerConfig name&gt;</span><span class="w">
+</span><span class="w">  </span><span class="nt">writeConnectionSecretToRef</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">playerone-cards</span><span class="w"> </span><span class="c"># edited to player&#39;s name</span><span class="w">
+</span><span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;shared namespace&gt;</span><span class="w"> </span><span class="c"># edited to shared namespace</span><span class="w">
+</span></code></pre></div><p>Now&hellip; can we make it play Blackjack?</p>
+<p><img src="../../images/crossplane/crossplane-configuration-development-with-poker/composite-blackjack.png" alt="Can you make it playBlackjack?" title="Can you make it play Blackjack?"></p>
+<h2 id="useful-links">Useful Links</h2>
+<ul>
+<li><a href="https://crossplane.io/docs/v1.6/getting-started/create-configuration.html">Crossplane Configuration Docs</a></li>
+<li><a href="https://kuttl.dev/docs/testing/reference.html">Kuttl configuration reference</a></li>
+<li><a href="https://crossplane.io/docs/v1.6/concepts/terminology.html#crossplane-terms">Crossplane Terminology</a></li>
+</ul>
+
+</div>
+
+    <div class="footer">
+  
+  <div class="footer-social">
+    
+      <span class="social-icon social-icon-twitter">
+        <a href="https://twitter.com/aaron_eaton" title="twitter" target="_blank" rel="noopener">
+          <img src="/images/social/twitter.svg" width="24" height="24" alt="twitter"/>
+        </a>
+      </span>
+    
+      <span class="social-icon social-icon-github">
+        <a href="https://github.com/AaronMe" title="github" target="_blank" rel="noopener">
+          <img src="/images/social/github.svg" width="24" height="24" alt="github"/>
+        </a>
+      </span>
+    
+      <span class="social-icon social-icon-linkedin">
+        <a href="https://www.linkedin.com/in/aaron-eaton-2018/" title="linkedin" target="_blank" rel="noopener">
+          <img src="/images/social/linkedin.svg" width="24" height="24" alt="linkedin"/>
+        </a>
+      </span>
+    
+  </div>
+  
+  <div class="footer-copyright">
+    <span class="copy">Copyright &copy; 2022 Aaron Eaton.</span>
+  </div>
+</div>
+  </div>
+
+  
+
+  
+
+  
+  <script type="text/javascript" src="/js/bundle.min.e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.js"></script>
+  
+
+  
+  
+
+  
+  
+  
+    
+      
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-B4RD5175XG"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-B4RD5175XG');
+      </script>
+    
+  
+
+
+</body>
+</html>

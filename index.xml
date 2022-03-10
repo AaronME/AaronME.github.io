@@ -6,7 +6,17 @@
     <description>Recent content in Howdy on AaronEaton.com</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 28 Jan 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://aaroneaton.com/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 10 Mar 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://aaroneaton.com/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Teaching Crossplane to Play Poker</title>
+      <link>https://aaroneaton.com/crossplane/crossplane-configuration-development-with-poker/</link>
+      <pubDate>Thu, 10 Mar 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://aaroneaton.com/crossplane/crossplane-configuration-development-with-poker/</guid>
+      <description>Let&amp;rsquo;s Teach Crossplane to Play Poker The Penguin Book of Card Games lists over 250 games which can be played with a standard deck of playing cards. Most of those games don&amp;rsquo;t require any changes to the deck. Blackjack, poker, gin, go fish, crazy eights, old maid&amp;hellip; these games all use the same 4 suits of 13 ranks.
+When we start composing infrastructure with Crossplane, it&amp;rsquo;s a lot like learning a new game with playing cards.</description>
+    </item>
+    
     <item>
       <title>Conformance Testing Crossplane Configuration Packages with Sonobuoy</title>
       <link>https://aaroneaton.com/crossplane/crossplane-package-testing-with-sonobuoy/</link>
