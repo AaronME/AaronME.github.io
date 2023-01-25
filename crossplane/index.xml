@@ -44,7 +44,7 @@ Because the output of our compositions is this declarative set of YAML documents
       
       <guid>https://aaroneaton.com/crossplane/crossplane-package-testing-with-kuttl/</guid>
       <description>Crossplane Package Test Loop The test loop for Crossplane Packages is always going to be an end-2-end test in a working kubernetes cluster. In order to validate that a package behaves as desired, we must:
- Access a Kubernetes Cluster Install Crossplane and required providers on that cluster Configure our Composite Resources (XRs) on that cluster Submit a Composite Resource or Claim Validate that we got the desired Resources in response Repeat the last 3 steps for each Resource  Kuttl kuttl (The KUbernetes Test TooL) is a toolkit for writing tests against Kubernetes.</description>
+Access a Kubernetes Cluster Install Crossplane and required providers on that cluster Configure our Composite Resources (XRs) on that cluster Submit a Composite Resource or Claim Validate that we got the desired Resources in response Repeat the last 3 steps for each Resource Kuttl kuttl (The KUbernetes Test TooL) is a toolkit for writing tests against Kubernetes.</description>
     </item>
     
   </channel>

@@ -94,19 +94,19 @@ In this post I will show you how we did it.</p>
 </ul>
 <h4 id="installing-kuttl">Installing kuttl</h4>
 <p>I am running Mac OS X, so I installed kuttl using homebrew:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">brew tap kudobuilder/tap
-brew install kuttl-cli
-</code></pre></div><p>You can find installation instructions for other platforms on
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">brew tap kudobuilder/tap
+</span></span><span class="line"><span class="cl">brew install kuttl-cli
+</span></span></code></pre></div><p>You can find installation instructions for other platforms on
 <a href="https://kuttl.dev/docs/#install-kuttl-cli">kuttl&rsquo;s install page</a>.</p>
 <h3 id="step-one-launch-kind">Step One: Launch Kind</h3>
 <p>We&rsquo;re going to create a kuttl <strong>TestSuite</strong> and use it to start a kind cluster.
 Create the following file in the root of your workspace.</p>
 <p><strong>kuttl-test.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
-</span><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-</span><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
-</span></code></pre></div><p>You have now completed Step One. That was easy!</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
+</span></span></span></code></pre></div><p>You have now completed Step One. That was easy!</p>
 <p>At the start of each test run kuttl will create a kind cluster with the name
 defined in <strong>kindContext</strong>.</p>
 <p>If you don&rsquo;t care about the name of the cluster, you can omit this. Kuttl will
@@ -124,14 +124,14 @@ running for all tests, we&rsquo;re going to set it up in the TestSuite, rather t
 any individual TestStep.</p>
 <p>Let&rsquo;s add <strong>commands</strong> to install Crossplane to our Test Suite.</p>
 <p><strong>kuttl-test.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
-</span><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace</span><span class="w">
-</span><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-</span><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
-</span></code></pre></div><p>We use <strong>universal-crossplane</strong> at Upbound, but you can use vanilla
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
+</span></span></span></code></pre></div><p>We use <strong>universal-crossplane</strong> at Upbound, but you can use vanilla
 <strong>crossplane</strong>. They will both work for this demo.</p>
 <h3 id="step-three-add-composite-resources-to-the-control-plane">Step Three: Add Composite Resources to the Control Plane</h3>
 <p>We&rsquo;re going to source the Composite Resource configuration from the
@@ -148,50 +148,50 @@ with the actual dependencies, declared in a <strong>crossplane.yaml</strong>. We
 values file under a new folder called <strong>tests</strong>, which will be the home for our
 test cases as well.</p>
 <p><strong>tests/uxp-values.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">provider</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="nt">packages</span><span class="p">:</span><span class="w">
-</span><span class="w">    </span>- <span class="l">crossplane/provider-aws:v0.19.0</span><span class="w">
-</span></code></pre></div><p>Now update the command in your TestSuite.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">provider</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">packages</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">crossplane/provider-aws:v0.19.0</span><span class="w">
+</span></span></span></code></pre></div><p>Now update the command in your TestSuite.</p>
 <p><strong>kuttl-test.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
-</span><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml</span><span class="w">
-</span><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-</span><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
-</span></code></pre></div><p>We&rsquo;re going to want to make sure we delay any testing until the provider is
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
+</span></span></span></code></pre></div><p>We&rsquo;re going to want to make sure we delay any testing until the provider is
 healthy. So let&rsquo;s add a <strong>kubectl wait</strong> command.</p>
 <p><strong>kuttl-test.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
-</span><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml</span><span class="w">
-</span><span class="w">  </span><span class="c"># Wait for provider-aws to become healthy.</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=healthy  --timeout=300s provider/crossplane-provider-aws</span><span class="w">
-</span><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-</span><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
-</span></code></pre></div><h4 id="creating-a-teststep">Creating a TestStep</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Wait for provider-aws to become healthy.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=healthy  --timeout=300s provider/crossplane-provider-aws</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
+</span></span></span></code></pre></div><h4 id="creating-a-teststep">Creating a TestStep</h4>
 <p>Now that we&rsquo;re working with specific resources, we&rsquo;re ready to define Test
 Cases. First, we&rsquo;ll create a folder for our composition tests and a folder for
 our test case (we&rsquo;ll be using the <strong>CompositeNetwork</strong> Resource from
 <strong>platform-ref-aws</strong>).</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">mkdir -p tests/compositions/compositenetwork
-</code></pre></div><p>We&rsquo;ll add <strong>tests/compositions/</strong> to the list of <strong>testDirs</strong> in our TestSuite.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mkdir -p tests/compositions/compositenetwork
+</span></span></code></pre></div><p>We&rsquo;ll add <strong>tests/compositions/</strong> to the list of <strong>testDirs</strong> in our TestSuite.</p>
 <p><strong>kuttl-test.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
-</span><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml</span><span class="w">
-</span><span class="w">  </span><span class="c"># Wait for provider-aws to become healthy.</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=healthy  --timeout=300s provider/crossplane-provider-aws</span><span class="w">
-</span><span class="w"></span><span class="nt">testDirs</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span>- <span class="l">tests/compositions/</span><span class="w">
-</span><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-</span><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
-</span></code></pre></div><h4 id="composite-resource-order-of-operations">Composite Resource Order of Operations</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Wait for provider-aws to become healthy.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=healthy  --timeout=300s provider/crossplane-provider-aws</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">testDirs</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">tests/compositions/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
+</span></span></span></code></pre></div><h4 id="composite-resource-order-of-operations">Composite Resource Order of Operations</h4>
 <p>This is not a tutorial on writing compositions, or a technical walkthrough of
 how compositions work. But I want to clearly establish the order of operations
 required to get a new XR installed on a cluster.</p>
@@ -205,14 +205,14 @@ status &ldquo;established=true&rdquo;.</p>
 <p>You can only submit an XR or a Claim for one if its XRD is &ldquo;established.&rdquo;</p>
 <p>So the first step our test case will install the XRD and Composite.</p>
 <p><strong>tests/compositions/compositenetwork/00-install.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestStep</span><span class="w">
-</span><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="c"># Install the XRD</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/network/definition.yaml</span><span class="w">
-</span><span class="w">  </span><span class="c"># Install the Composition</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/network/composition.yaml</span><span class="w">
-</span></code></pre></div><p>We&rsquo;re using the same <strong>commands</strong> argument that we saw in the TestSuite. If we
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestStep</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Install the XRD</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/network/definition.yaml</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Install the Composition</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/network/composition.yaml</span><span class="w">
+</span></span></span></code></pre></div><p>We&rsquo;re using the same <strong>commands</strong> argument that we saw in the TestSuite. If we
 were working with a local package these commands would reference files in our
 <strong>package/</strong> folder. But for the sake of this demo, we are applying them
 directly from github.</p>
@@ -227,96 +227,96 @@ render composition.</p>
 only want to validate that our Composition renders properly. So we&rsquo;ll create a
 &ldquo;no money down&rdquo; ProviderConfig for AWS in an <strong>init</strong> folder under <strong>tests</strong>.</p>
 <p><strong>tests/init/providerConfig.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
-</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Secret</span><span class="w">
-</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">aws-creds</span><span class="w">
-</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">upbound-system</span><span class="w">
-</span><span class="w"></span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">Opaque</span><span class="w">
-</span><span class="w"></span><span class="nt">stringData</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">nocreds</span><span class="w">
-</span><span class="w"></span><span class="nn">---</span><span class="w">
-</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">aws.crossplane.io/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ProviderConfig</span><span class="w">
-</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
-</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="nt">credentials</span><span class="p">:</span><span class="w">
-</span><span class="w">    </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l">Secret</span><span class="w">
-</span><span class="w">    </span><span class="nt">secretRef</span><span class="p">:</span><span class="w">
-</span><span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">upbound-system</span><span class="w">
-</span><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">aws-creds</span><span class="w">
-</span><span class="w">      </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">key</span><span class="w">
-</span></code></pre></div><p>And we&rsquo;ll make sure every test case can use this by adding it ot the TestSuite.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nn">---</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Secret</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">aws-creds</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">upbound-system</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">Opaque</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">stringData</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">nocreds</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nn">---</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">aws.crossplane.io/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ProviderConfig</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">credentials</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l">Secret</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">secretRef</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">upbound-system</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">aws-creds</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">key</span><span class="w">
+</span></span></span></code></pre></div><p>And we&rsquo;ll make sure every test case can use this by adding it ot the TestSuite.</p>
 <p><strong>kuttl-test.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
-</span><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml</span><span class="w">
-</span><span class="w">  </span><span class="c"># Wait for provider-aws to become healthy.</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=healthy  --timeout=300s provider/crossplane-provider-aws</span><span class="w">
-</span><span class="w">  </span><span class="c"># Install ProviderConfig for test.</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl apply -f tests/init/</span><span class="w">
-</span><span class="w"></span><span class="nt">testDirs</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span>- <span class="l">tests/compositions/</span><span class="w">
-</span><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-</span><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
-</span></code></pre></div><h3 id="step-four-create-the-compositeresource">Step Four: Create the CompositeResource</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Wait for provider-aws to become healthy.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=healthy  --timeout=300s provider/crossplane-provider-aws</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Install ProviderConfig for test.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl apply -f tests/init/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">testDirs</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">tests/compositions/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
+</span></span></span></code></pre></div><h3 id="step-four-create-the-compositeresource">Step Four: Create the CompositeResource</h3>
 <p>We are now going to submit a CompositeResource for Crossplane to render. Note
 that we are making this a new Step by incrementing the numerical prefix. Kuttl
 will run all of the <strong>00-*</strong> test steps before proceeding to <strong>01-*</strong>.)</p>
 <p>We will add a <strong>kubectl wait</strong> command to make sure the XRD is established
 before applying our resource.</p>
 <p><strong>tests/compositions/compositenetwork/01-network.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestStep</span><span class="w">
-</span><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="c"># Wait for XRD to become &#34;established&#34;</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=established --timeout=20s xrd/compositenetworks.aws.platformref.crossplane.io</span><span class="w">
-</span><span class="w">  </span><span class="c"># Create the XR/Claim</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectly apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/examples/network.yaml</span><span class="w">
-</span></code></pre></div><h3 id="step-five-validate-managed-resources">Step Five: Validate Managed Resources</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestStep</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Wait for XRD to become &#34;established&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=established --timeout=20s xrd/compositenetworks.aws.platformref.crossplane.io</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Create the XR/Claim</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectly apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/examples/network.yaml</span><span class="w">
+</span></span></span></code></pre></div><h3 id="step-five-validate-managed-resources">Step Five: Validate Managed Resources</h3>
 <p>At this point, Crossplane should be rendering our Network Resource. We
 will now validate that using an <strong>*-assert.yaml</strong> file. Warning,
 <strong>CompositeNetwork</strong> creates 8 managed resources. We&rsquo;ve limited this test to
 checking only for the existence of two subnets and some tags on the VPC.</p>
 <p><strong>tests/compositions/compositenetwork/01-assert.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w">
-</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">ec2.aws.crossplane.io/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Subnet</span><span class="w">
-</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
-</span><span class="w">    </span><span class="nt">access</span><span class="p">:</span><span class="w"> </span><span class="l">private</span><span class="w">
-</span><span class="w">    </span><span class="nt">crossplane.io/claim-name</span><span class="p">:</span><span class="w"> </span><span class="l">network</span><span class="w">
-</span><span class="w">    </span><span class="nt">networks.aws.platformref.crossplane.io/network-id</span><span class="p">:</span><span class="w"> </span><span class="l">platform-ref-aws-network</span><span class="w">
-</span><span class="w">    </span><span class="nt">zone</span><span class="p">:</span><span class="w"> </span><span class="l">us-west-2a</span><span class="w">
-</span><span class="w"></span><span class="nn">---</span><span class="w">
-</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">ec2.aws.crossplane.io/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Subnet</span><span class="w">
-</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
-</span><span class="w">    </span><span class="nt">access</span><span class="p">:</span><span class="w"> </span><span class="l">public</span><span class="w">
-</span><span class="w">    </span><span class="nt">crossplane.io/claim-name</span><span class="p">:</span><span class="w"> </span><span class="l">network</span><span class="w">
-</span><span class="w">    </span><span class="nt">networks.aws.platformref.crossplane.io/network-id</span><span class="p">:</span><span class="w"> </span><span class="l">platform-ref-aws-network</span><span class="w">
-</span><span class="w">    </span><span class="nt">zone</span><span class="p">:</span><span class="w"> </span><span class="l">us-west-2a</span><span class="w">
-</span><span class="w"></span><span class="nn">---</span><span class="w">
-</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">ec2.aws.crossplane.io/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">VPC</span><span class="w">
-</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
-</span><span class="w">    </span><span class="nt">crossplane.io/claim-name</span><span class="p">:</span><span class="w"> </span><span class="l">network</span><span class="w">
-</span><span class="w">    </span><span class="nt">networks.aws.platformref.crossplane.io/network-id</span><span class="p">:</span><span class="w"> </span><span class="l">platform-ref-aws-network</span><span class="w">
-</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="nt">deletionPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">Delete</span><span class="w">
-</span><span class="w">  </span><span class="nt">forProvider</span><span class="p">:</span><span class="w">
-</span><span class="w">    </span><span class="nt">tags</span><span class="p">:</span><span class="w">
-</span><span class="w">    </span>- <span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">crossplane-kind</span><span class="w">
-</span><span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">vpc.ec2.aws.crossplane.io</span><span class="w">
-</span><span class="w">    </span>- <span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">crossplane-name</span><span class="w">
-</span><span class="w">    </span>- <span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">crossplane-providerconfig</span><span class="w">
-</span></code></pre></div><h4 id="parallelism">Parallelism</h4>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nn">---</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">ec2.aws.crossplane.io/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Subnet</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">access</span><span class="p">:</span><span class="w"> </span><span class="l">private</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">crossplane.io/claim-name</span><span class="p">:</span><span class="w"> </span><span class="l">network</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">networks.aws.platformref.crossplane.io/network-id</span><span class="p">:</span><span class="w"> </span><span class="l">platform-ref-aws-network</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">zone</span><span class="p">:</span><span class="w"> </span><span class="l">us-west-2a</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nn">---</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">ec2.aws.crossplane.io/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Subnet</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">access</span><span class="p">:</span><span class="w"> </span><span class="l">public</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">crossplane.io/claim-name</span><span class="p">:</span><span class="w"> </span><span class="l">network</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">networks.aws.platformref.crossplane.io/network-id</span><span class="p">:</span><span class="w"> </span><span class="l">platform-ref-aws-network</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">zone</span><span class="p">:</span><span class="w"> </span><span class="l">us-west-2a</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nn">---</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">ec2.aws.crossplane.io/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">VPC</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">crossplane.io/claim-name</span><span class="p">:</span><span class="w"> </span><span class="l">network</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">networks.aws.platformref.crossplane.io/network-id</span><span class="p">:</span><span class="w"> </span><span class="l">platform-ref-aws-network</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">deletionPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">Delete</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">forProvider</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">tags</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">crossplane-kind</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">vpc.ec2.aws.crossplane.io</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">crossplane-name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">crossplane-providerconfig</span><span class="w">
+</span></span></span></code></pre></div><h4 id="parallelism">Parallelism</h4>
 <p>Kuttl will run your Test Cases in Parallel. This can cause problems if you have
 multiple resources that depend on one another, or on a common resource. (For
 example, both PostgresDB and Cluster rely on Network in platform-ref-aws). This
@@ -327,84 +327,84 @@ the Composite Resources in your <strong>package/</strong> folder at the beginnin
 Suite to ensure all dependencies are in place.</p>
 <h4 id="running-the-test">Running the test</h4>
 <p>Now that everything is setup, run the tests from the root of your workspace.</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">kubectl kuttle <span class="nb">test</span>
-
-<span class="o">===</span> RUN   kuttl
-    harness.go:457: starting setup
-    harness.go:245: running tests with KIND.
-    harness.go:156: Starting KIND cluster
-    kind.go:67: Adding Containers to KIND...
-    harness.go:285: Successful connection to cluster at: https://127.0.0.1:50478
-    logger.go:42: 20:44:36 <span class="p">|</span>  <span class="p">|</span> running command: <span class="o">[</span>helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml<span class="o">]</span>
-    ...
-    logger.go:42: 20:46:21 <span class="p">|</span>  <span class="p">|</span> running command: <span class="o">[</span>kubectl <span class="nb">wait</span> --for <span class="nv">condition</span><span class="o">=</span>healthy --timeout<span class="o">=</span>300s provider/crossplane-provider-aws<span class="o">]</span>
-    logger.go:42: 20:47:30 <span class="p">|</span>  <span class="p">|</span> provider.pkg.crossplane.io/crossplane-provider-aws condition met
-    logger.go:42: 20:47:30 <span class="p">|</span>  <span class="p">|</span> running command: <span class="o">[</span>kubectl apply -f tests/init/<span class="o">]</span>
-    logger.go:42: 20:47:39 <span class="p">|</span>  <span class="p">|</span> secret/aws-creds created
-    logger.go:42: 20:48:00 <span class="p">|</span>  <span class="p">|</span> providerconfig.aws.crossplane.io/default created
-    harness.go:353: running tests
-    harness.go:74: going to run <span class="nb">test</span> suite with timeout of <span class="m">30</span> seconds <span class="k">for</span> each step
-    harness.go:365: testsuite: tests/compositions/ has <span class="m">1</span> <span class="nv">tests</span>
-<span class="o">===</span> RUN   kuttl/harness
-<span class="o">===</span> RUN   kuttl/harness/compositenetwork
-<span class="o">===</span> PAUSE kuttl/harness/compositenetwork
-<span class="o">===</span> CONT  kuttl/harness/compositenetwork
-    logger.go:42: 20:48:00 <span class="p">|</span> compositenetwork <span class="p">|</span> Creating namespace: kuttl-test-enormous-albacore
-    logger.go:42: 20:48:00 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> starting <span class="nb">test</span> step 0-install
-    logger.go:42: 20:48:00 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> running command: <span class="o">[</span>kubectl apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/network/definition.yaml<span class="o">]</span>
-    logger.go:42: 20:48:02 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> compositeresourcedefinition.apiextensions.crossplane.io/compositenetworks.aws.platformref.crossplane.io created
-    logger.go:42: 20:48:02 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> running command: <span class="o">[</span>kubectl apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/network/composition.yaml<span class="o">]</span>
-    logger.go:42: 20:48:04 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> composition.apiextensions.crossplane.io/compositenetworks.aws.platformref.crossplane.io created
-    logger.go:42: 20:48:05 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> <span class="nb">test</span> step completed 0-install
-    logger.go:42: 20:48:05 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> starting <span class="nb">test</span> step 1-network
-    logger.go:42: 20:48:05 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> running command: <span class="o">[</span>kubectl <span class="nb">wait</span> --for <span class="nv">condition</span><span class="o">=</span>established --timeout<span class="o">=</span>20s xrd/compositenetworks.aws.platformref.crossplane.io<span class="o">]</span>
-    logger.go:42: 20:48:06 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> compositeresourcedefinition.apiextensions.crossplane.io/compositenetworks.aws.platformref.crossplane.io condition met
-    logger.go:42: 20:48:06 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> running command: <span class="o">[</span>kubectl apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/examples/network.yaml<span class="o">]</span>
-    logger.go:42: 20:48:12 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> network.aws.platformref.crossplane.io/network created
-    logger.go:42: 20:48:23 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> <span class="nb">test</span> step completed 1-network
-    logger.go:42: 20:48:23 <span class="p">|</span> compositenetwork <span class="p">|</span> compositenetwork events from ns kuttl-test-enormous-albacore:
-    logger.go:42: 20:48:23 <span class="p">|</span> compositenetwork <span class="p">|</span> Deleting namespace: kuttl-test-enormous-albacore
-<span class="o">===</span> CONT  kuttl
-    harness.go:399: run tests finished
-    harness.go:508: cleaning up
-    harness.go:569: tearing down kind cluster
---- PASS: kuttl <span class="o">(</span>362.88s<span class="o">)</span>
-    --- PASS: kuttl/harness <span class="o">(</span>0.00s<span class="o">)</span>
-        --- PASS: kuttl/harness/compositenetwork <span class="o">(</span>23.70s<span class="o">)</span>
-PASS
-</code></pre></div><h2 id="the-finished-product">The Finished Product</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">kubectl kuttle <span class="nb">test</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">===</span> RUN   kuttl
+</span></span><span class="line"><span class="cl">    harness.go:457: starting setup
+</span></span><span class="line"><span class="cl">    harness.go:245: running tests with KIND.
+</span></span><span class="line"><span class="cl">    harness.go:156: Starting KIND cluster
+</span></span><span class="line"><span class="cl">    kind.go:67: Adding Containers to KIND...
+</span></span><span class="line"><span class="cl">    harness.go:285: Successful connection to cluster at: https://127.0.0.1:50478
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:44:36 <span class="p">|</span>  <span class="p">|</span> running command: <span class="o">[</span>helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    ...
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:46:21 <span class="p">|</span>  <span class="p">|</span> running command: <span class="o">[</span>kubectl <span class="nb">wait</span> --for <span class="nv">condition</span><span class="o">=</span>healthy --timeout<span class="o">=</span>300s provider/crossplane-provider-aws<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:47:30 <span class="p">|</span>  <span class="p">|</span> provider.pkg.crossplane.io/crossplane-provider-aws condition met
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:47:30 <span class="p">|</span>  <span class="p">|</span> running command: <span class="o">[</span>kubectl apply -f tests/init/<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:47:39 <span class="p">|</span>  <span class="p">|</span> secret/aws-creds created
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:00 <span class="p">|</span>  <span class="p">|</span> providerconfig.aws.crossplane.io/default created
+</span></span><span class="line"><span class="cl">    harness.go:353: running tests
+</span></span><span class="line"><span class="cl">    harness.go:74: going to run <span class="nb">test</span> suite with timeout of <span class="m">30</span> seconds <span class="k">for</span> each step
+</span></span><span class="line"><span class="cl">    harness.go:365: testsuite: tests/compositions/ has <span class="m">1</span> <span class="nv">tests</span>
+</span></span><span class="line"><span class="cl"><span class="o">===</span> RUN   kuttl/harness
+</span></span><span class="line"><span class="cl"><span class="o">===</span> RUN   kuttl/harness/compositenetwork
+</span></span><span class="line"><span class="cl"><span class="o">===</span> PAUSE kuttl/harness/compositenetwork
+</span></span><span class="line"><span class="cl"><span class="o">===</span> CONT  kuttl/harness/compositenetwork
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:00 <span class="p">|</span> compositenetwork <span class="p">|</span> Creating namespace: kuttl-test-enormous-albacore
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:00 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> starting <span class="nb">test</span> step 0-install
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:00 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> running command: <span class="o">[</span>kubectl apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/network/definition.yaml<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:02 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> compositeresourcedefinition.apiextensions.crossplane.io/compositenetworks.aws.platformref.crossplane.io created
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:02 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> running command: <span class="o">[</span>kubectl apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/network/composition.yaml<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:04 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> composition.apiextensions.crossplane.io/compositenetworks.aws.platformref.crossplane.io created
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:05 <span class="p">|</span> compositenetwork/0-install <span class="p">|</span> <span class="nb">test</span> step completed 0-install
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:05 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> starting <span class="nb">test</span> step 1-network
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:05 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> running command: <span class="o">[</span>kubectl <span class="nb">wait</span> --for <span class="nv">condition</span><span class="o">=</span>established --timeout<span class="o">=</span>20s xrd/compositenetworks.aws.platformref.crossplane.io<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:06 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> compositeresourcedefinition.apiextensions.crossplane.io/compositenetworks.aws.platformref.crossplane.io condition met
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:06 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> running command: <span class="o">[</span>kubectl apply -f https://raw.githubusercontent.com/upbound/platform-ref-aws/main/examples/network.yaml<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:12 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> network.aws.platformref.crossplane.io/network created
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:23 <span class="p">|</span> compositenetwork/1-network <span class="p">|</span> <span class="nb">test</span> step completed 1-network
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:23 <span class="p">|</span> compositenetwork <span class="p">|</span> compositenetwork events from ns kuttl-test-enormous-albacore:
+</span></span><span class="line"><span class="cl">    logger.go:42: 20:48:23 <span class="p">|</span> compositenetwork <span class="p">|</span> Deleting namespace: kuttl-test-enormous-albacore
+</span></span><span class="line"><span class="cl"><span class="o">===</span> CONT  kuttl
+</span></span><span class="line"><span class="cl">    harness.go:399: run tests finished
+</span></span><span class="line"><span class="cl">    harness.go:508: cleaning up
+</span></span><span class="line"><span class="cl">    harness.go:569: tearing down kind cluster
+</span></span><span class="line"><span class="cl">--- PASS: kuttl <span class="o">(</span>362.88s<span class="o">)</span>
+</span></span><span class="line"><span class="cl">    --- PASS: kuttl/harness <span class="o">(</span>0.00s<span class="o">)</span>
+</span></span><span class="line"><span class="cl">        --- PASS: kuttl/harness/compositenetwork <span class="o">(</span>23.70s<span class="o">)</span>
+</span></span><span class="line"><span class="cl">PASS
+</span></span></code></pre></div><h2 id="the-finished-product">The Finished Product</h2>
 <p>In the end, our folder structure for a configuration package including kuttl
 tests will look like the following:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">.
-├── examples <span class="c1"># CompositeResource examples (not demonstrated)</span>
-├── kuttl-test.yaml <span class="c1"># TestSuite configuration</span>
-├── package <span class="c1"># XRDs and Composites (not demonstrated)</span>
-│   └── crossplane.yaml <span class="c1"># Configuration Package metadata file</span>
-└── tests <span class="c1"># TestSteps</span>
-    ├── compositions
-    │   └── compositenetwork
-    │       ├── 00-install.yaml
-    │       ├── 01-assert.yaml
-    │       └── 01-network.yaml
-    ├── init <span class="c1"># Manifests to initialize test environment</span>
-    │   └── providerConfig.yaml
-    └── uxp-values.yaml <span class="c1"># Values for Universal-Crossplane</span>
-</code></pre></div><p>And this is the complete <strong>kuttl-test.yaml</strong>:</p>
-<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
-</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
-</span><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml</span><span class="w">
-</span><span class="w">  </span><span class="c"># Wait for provider-aws to become healthy.</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=healthy  --timeout=300s provider/crossplane-provider-aws</span><span class="w">
-</span><span class="w">  </span><span class="c"># Install ProviderConfig for test.</span><span class="w">
-</span><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl apply -f tests/init/</span><span class="w">
-</span><span class="w"></span><span class="nt">testDirs</span><span class="p">:</span><span class="w">
-</span><span class="w">  </span><span class="c"># Test Cases</span><span class="w">
-</span><span class="w">  </span>- <span class="l">tests/compositions/</span><span class="w">
-</span><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-</span><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
-</span></code></pre></div><h2 id="useful-links">Useful Links</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">.
+</span></span><span class="line"><span class="cl">├── examples <span class="c1"># CompositeResource examples (not demonstrated)</span>
+</span></span><span class="line"><span class="cl">├── kuttl-test.yaml <span class="c1"># TestSuite configuration</span>
+</span></span><span class="line"><span class="cl">├── package <span class="c1"># XRDs and Composites (not demonstrated)</span>
+</span></span><span class="line"><span class="cl">│   └── crossplane.yaml <span class="c1"># Configuration Package metadata file</span>
+</span></span><span class="line"><span class="cl">└── tests <span class="c1"># TestSteps</span>
+</span></span><span class="line"><span class="cl">    ├── compositions
+</span></span><span class="line"><span class="cl">    │   └── compositenetwork
+</span></span><span class="line"><span class="cl">    │       ├── 00-install.yaml
+</span></span><span class="line"><span class="cl">    │       ├── 01-assert.yaml
+</span></span><span class="line"><span class="cl">    │       └── 01-network.yaml
+</span></span><span class="line"><span class="cl">    ├── init <span class="c1"># Manifests to initialize test environment</span>
+</span></span><span class="line"><span class="cl">    │   └── providerConfig.yaml
+</span></span><span class="line"><span class="cl">    └── uxp-values.yaml <span class="c1"># Values for Universal-Crossplane</span>
+</span></span></code></pre></div><p>And this is the complete <strong>kuttl-test.yaml</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl.dev/v1beta1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">TestSuite</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">commands</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Install Univerasal Crossplane (uxp).</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">helm install universal-crossplane https://charts.upbound.io/stable/universal-crossplane-1.5.1-up.1.tgz --namespace upbound-system --wait --create-namespace --values tests/uxp-values.yaml</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Wait for provider-aws to become healthy.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl wait --for condition=healthy  --timeout=300s provider/crossplane-provider-aws</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Install ProviderConfig for test.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l">kubectl apply -f tests/init/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">testDirs</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Test Cases</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="l">tests/compositions/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">startKIND</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kindContext</span><span class="p">:</span><span class="w"> </span><span class="l">kuttl-test</span><span class="w">
+</span></span></span></code></pre></div><h2 id="useful-links">Useful Links</h2>
 <ul>
 <li><a href="https://www.youtube.com/watch?v=K9i-vleJggo">KUTTL: Level up your Kubernetes E2E Testing - Ken Sipe (D2iQ)</a></li>
 <li><a href="https://kuttl.dev/docs/testing/reference.html">kuttl configuration reference</a></li>
