@@ -6,57 +6,49 @@
     <description>Recent content in Howdy on AaronEaton.com</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 10 Mar 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://aaroneaton.com/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 16 Dec 2023 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://aaroneaton.com/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Taking the Pager is Taking the Wheel, Not the Title</title>
+      <link>https://aaroneaton.com/analogies/atthewheel/</link>
+      <pubDate>Sat, 16 Dec 2023 00:00:00 +0000</pubDate>
+      <guid>https://aaroneaton.com/analogies/atthewheel/</guid>
+      <description>This post was partly inspired by Sean Kilgore&amp;rsquo;s recent blog about Common Errors in the Paved Path metaphor. Sean&amp;rsquo;s language mirrors a metaphor that surfaced within my team about our On-Call Rotation. Sean contrasts the &amp;ldquo;paved path&amp;rdquo; an organization provides to its developers with the &amp;ldquo;vehicles&amp;rdquo; each team puts on that path. My team talks about being on-call in terms of &amp;ldquo;taking the wheel of the vehicle,&amp;rdquo; instead of the more common &amp;ldquo;being responsible for fixing anything that goes wrong.</description>
+    </item>
     <item>
       <title>Teaching Crossplane to Play Poker</title>
       <link>https://aaroneaton.com/crossplane/crossplane-configuration-development-with-poker/</link>
       <pubDate>Thu, 10 Mar 2022 00:00:00 +0000</pubDate>
-      
       <guid>https://aaroneaton.com/crossplane/crossplane-configuration-development-with-poker/</guid>
-      <description>Let&amp;rsquo;s Teach Crossplane to Play Poker The Penguin Book of Card Games lists over 250 games which can be played with a standard deck of playing cards. Most of those games don&amp;rsquo;t require any changes to the deck. Blackjack, poker, gin, go fish, crazy eights, old maid&amp;hellip; these games all use the same 4 suits of 13 ranks.
-When we start composing infrastructure with Crossplane, it&amp;rsquo;s a lot like learning a new game with playing cards.</description>
+      <description>Let&amp;rsquo;s Teach Crossplane to Play Poker The Penguin Book of Card Games lists over 250 games which can be played with a standard deck of playing cards. Most of those games don&amp;rsquo;t require any changes to the deck. Blackjack, poker, gin, go fish, crazy eights, old maid&amp;hellip; these games all use the same 4 suits of 13 ranks.&#xA;When we start composing infrastructure with Crossplane, it&amp;rsquo;s a lot like learning a new game with playing cards.</description>
     </item>
-    
     <item>
       <title>Conformance Testing Crossplane Configuration Packages with Sonobuoy</title>
       <link>https://aaroneaton.com/crossplane/crossplane-package-testing-with-sonobuoy/</link>
       <pubDate>Fri, 28 Jan 2022 00:00:00 +0000</pubDate>
-      
       <guid>https://aaroneaton.com/crossplane/crossplane-package-testing-with-sonobuoy/</guid>
-      <description>Conformance Tests for Crossplane Configuration Packages When crossplane graduated to Incubation status we published a conformance for crossplane and its providers. I started to wonder if we could use the same tools and framework for testing Configuration Packages, as well as Provider Packages.
-A unified testing strategy for all crossplane packages could simplify our build and test pipelines. And it would provide a method for testing and validating external packages. Especially if we adopted a tool and framework which were already community standards.</description>
+      <description>Conformance Tests for Crossplane Configuration Packages When crossplane graduated to Incubation status we published a conformance for crossplane and its providers. I started to wonder if we could use the same tools and framework for testing Configuration Packages, as well as Provider Packages.&#xA;A unified testing strategy for all crossplane packages could simplify our build and test pipelines. And it would provide a method for testing and validating external packages. Especially if we adopted a tool and framework which were already community standards.</description>
     </item>
-    
     <item>
       <title>TDD For Crossplane Packages with Skaffold</title>
       <link>https://aaroneaton.com/crossplane/crossplane-package-tdd-with-skaffold/</link>
       <pubDate>Fri, 14 Jan 2022 00:00:00 +0000</pubDate>
-      
       <guid>https://aaroneaton.com/crossplane/crossplane-package-tdd-with-skaffold/</guid>
-      <description>Crossplane Package Development Crossplane Packages, and specifically the Composition Engine, allow Platform Teams to publish Composite Resources for use by Development Teams or Platform Operators. The end result of a Crossplane Composition is always going to be a set of valid YAML documents which define Crossplane Managed Resources.
-Because the output of our compositions is this declarative set of YAML documents, we have the ability to write tests for our configurations.</description>
+      <description>Crossplane Package Development Crossplane Packages, and specifically the Composition Engine, allow Platform Teams to publish Composite Resources for use by Development Teams or Platform Operators. The end result of a Crossplane Composition is always going to be a set of valid YAML documents which define Crossplane Managed Resources.&#xA;Because the output of our compositions is this declarative set of YAML documents, we have the ability to write tests for our configurations.</description>
     </item>
-    
     <item>
       <title>Testing Crossplane Packages with Kuttl</title>
       <link>https://aaroneaton.com/crossplane/crossplane-package-testing-with-kuttl/</link>
       <pubDate>Fri, 07 Jan 2022 00:00:00 +0000</pubDate>
-      
       <guid>https://aaroneaton.com/crossplane/crossplane-package-testing-with-kuttl/</guid>
-      <description>Crossplane Package Test Loop The test loop for Crossplane Packages is always going to be an end-2-end test in a working kubernetes cluster. In order to validate that a package behaves as desired, we must:
-Access a Kubernetes Cluster Install Crossplane and required providers on that cluster Configure our Composite Resources (XRs) on that cluster Submit a Composite Resource or Claim Validate that we got the desired Resources in response Repeat the last 3 steps for each Resource Kuttl kuttl (The KUbernetes Test TooL) is a toolkit for writing tests against Kubernetes.</description>
+      <description>Crossplane Package Test Loop The test loop for Crossplane Packages is always going to be an end-2-end test in a working kubernetes cluster. In order to validate that a package behaves as desired, we must:&#xA;Access a Kubernetes Cluster Install Crossplane and required providers on that cluster Configure our Composite Resources (XRs) on that cluster Submit a Composite Resource or Claim Validate that we got the desired Resources in response Repeat the last 3 steps for each Resource Kuttl kuttl (The KUbernetes Test TooL) is a toolkit for writing tests against Kubernetes.</description>
     </item>
-    
     <item>
       <title>About Me</title>
       <link>https://aaroneaton.com/pages/about/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
       <guid>https://aaroneaton.com/pages/about/</guid>
-      <description>Writer Do I write science fiction? I wear a watch that Dick Tracy never dreamed of and I&amp;rsquo;m typing this on a device that would look at home on Captain Picard&amp;rsquo;s desk. I write fiction about people trying to make sense of a world that runs on science.
-Engineer I&amp;rsquo;m a kubernetes fan boy and I will talk about it at parties if not monitored.
-I&amp;rsquo;ve worked with a lot of great people on projects like Call of Duty: Elite, Society6, and Procore.</description>
+      <description>Writer Do I write science fiction? I wear a watch that Dick Tracy never dreamed of and I&amp;rsquo;m typing this on a device that would look at home on Captain Picard&amp;rsquo;s desk. I write fiction about people trying to make sense of a world that runs on science.&#xA;Engineer I&amp;rsquo;m a kubernetes fan boy and I will talk about it at parties if not monitored.&#xA;I&amp;rsquo;ve worked with a lot of great people on projects like Call of Duty: Elite, Society6, Procore, and Upbound, the company behind the open source Crossplane project.</description>
     </item>
-    
   </channel>
 </rss>

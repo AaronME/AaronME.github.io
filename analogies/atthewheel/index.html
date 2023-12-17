@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Taking the Pager is Taking the Wheel, Not the Title - AaronEaton.com</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="https://aaroneaton.com/favicon.png">
+
+  
+  
+  <link rel="stylesheet" href="/css/style.min.b5edc2670fbb2e1948c6a17c1870576e18aad63dd2c4e445432feef7238f4ce4.css">
+  
+
+  
+    <meta name="description" content="Framing On-Call for Engineering Happiness and Success"/>
+    <meta property="og:title" content="Taking the Pager is Taking the Wheel, Not the Title"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="https://aaroneaton.com/analogies/atthewheel/"/>
+    
+    <meta property="og:description" content="Framing On-Call for Engineering Happiness and Success"/>
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:site" content="@aaron_eaton"/>
+    <meta name="twitter:creator" content="@aaron_eaton"/>
+  
+
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet"> 
+</head>
+
+
+
+
+<body class='page frame page-default-single'>
+  <div id="wrapper" class="wrapper">
+    <div class='header'>
+  <a class="header-logo" href="https://aaroneaton.com/">AaronEaton.com</a>
+  <div class="menu-main">
+    <ul>
+        
+        
+            <li class="menu-item-about">
+                <a href="/pages/about/">About</a>
+            </li>
+        
+            <li class="menu-item-analogies">
+                <a href="/analogies/">Analogies</a>
+            </li>
+        
+            <li class="menu-item-crossplane">
+                <a href="/crossplane/">Crossplane</a>
+            </li>
+        
+    </ul>
+  </div>
+</div>
+    
+<div class="intro">
+  <h1>Taking the Pager is Taking the Wheel, Not the Title<span class="dot">.</span></h1>
+  
+</div>
+
+<div class="content">
+  <p>This post was partly inspired by Sean Kilgore&rsquo;s recent blog about <a href="https://logik.al/posts/common-errors-in-paved-path-metaphor/">Common Errors
+in the Paved Path
+metaphor</a>. Sean&rsquo;s
+language mirrors a metaphor that surfaced within my team about our On-Call
+Rotation. Sean contrasts the &ldquo;paved path&rdquo; an organization provides to its
+developers with the &ldquo;vehicles&rdquo; each team puts on that path. My team talks about
+being on-call in terms of &ldquo;taking the wheel of the vehicle,&rdquo; instead of the more
+common &ldquo;being responsible for fixing anything that goes wrong.&rdquo;</p>
+<h2 id="taking-a-turn-at-the-wheel">Taking a Turn at the Wheel</h2>
+<p>Most of us have taken a road-trip with friends at some point in our lives. On
+such trips the group usually shared the driving duties. Everyone took a turn at
+the wheel.</p>
+<p>Taking a turn at the wheel came with certain responsibilites:</p>
+<ol>
+<li>Understanding and obeying the rules of the road.</li>
+<li>Protecting the life and safety of the occupants and cargo.</li>
+<li>Protecting the vehicle and its ability to operate.</li>
+</ol>
+<p>It <em>might</em> also have come with some privileges:</p>
+<ol>
+<li>Control of the air conditioning.</li>
+<li>Control of the music.</li>
+<li>Permission to wake people, if necessary, to protect the occupants or vehicle.</li>
+</ol>
+<p>It certainly did <em>not</em> come with the right to:</p>
+<ol>
+<li>Have the vehicle repainted, re-upholstered, or upgraded to &ldquo;our standards.&rdquo;</li>
+<li>Sell the vehicle or trade it for one we thought was &ldquo;better.&rdquo;</li>
+<li>Force everyone to take another mode of transportation because &ldquo;I don&rsquo;t feel
+like driving right now.&rdquo;</li>
+</ol>
+<p>Put another way, the driver does not become the owner of the car. They also do
+not become the mechanic, the tow truck, or the electrician.</p>
+<p>If the engine was overheating we expected the driver to lower speed, ask
+everyone to open their windows, and crank up the heater. We did <em>not</em> expected
+them to pull over and fix the radiator or perform an oil change on the side of
+the road.</p>
+<p>When a tire was punctured, the driver was responsible for pulling over. They may
+or may not have been the one who changed the actual tire &ndash; but at that point,
+they were not driving.</p>
+<p>There was no expectation that the driver be (or become) an expert on engines or
+drivetrains or the car&rsquo;s electrics. They were just expected to be awake,
+present, and commited to our safe arrival a the destination.</p>
+<h2 id="being-on-call-is-taking-a-turn-at-the-wheel">Being On-Call is Taking a Turn at the Wheel</h2>
+<p>Being the Driver of a car is a great metaphor for being on-call. And here we are
+talking about being the person who &ldquo;carries the pager.&rdquo; If something alerts, it
+will be your phone that rings. You are responsible for:</p>
+<ol>
+<li>Acknolwedging the page and investigating the alert.</li>
+<li>Assessing the <em>impact</em> of the alert on the safety of the system or the
+business&rsquo;s ability to operate.</li>
+<li>Taking any action necessary to preserve the safety of the system and the
+business.</li>
+</ol>
+<p>That last item is often misinterpreted. The responsibility to take action
+implies the right to run commands on production systems. On-call can restart
+servers, kill pods, or manipulate the database. But it also authorizes them to
+&ldquo;wake someone up.&rdquo; As the Driver, on-call might know how to change a tire &ndash; and
+that is great &ndash; but if they can&rsquo;t, they are expected to pull over and ask for
+help.</p>
+<p>A driver who continues to drive on a &ldquo;flat&rdquo; tire is not doing anyone any favors.</p>
+<h2 id="who-is-not-on-call">Who is Not On-Call?</h2>
+<p>There can be push-back to the idea that on-call is allowed to wake up other
+people. This often comes in the form of the question,&ldquo;Wait, doesn&rsquo;t that mean
+I&rsquo;m <em>always</em> on call?&rdquo;</p>
+<p>To answer this, I defer to Charity Majors&rsquo; popular <a href="https://charity.wtf/2020/10/03/on-call-shouldnt-suck-a-guide-for-managers/">ON CALL SHOULDN’T SUCK: A
+GUIDE FOR
+MANAGERS</a>:</p>
+<blockquote>
+<p>As for engineers who write code for 24×7 highly available services, it is a
+core part of their job is to support those services in production. (There are
+plenty of software jobs that do not involve building highly available
+services, for those who are offended by this.) Tossing it off to ops after
+tests pass is nothing but a thinly veiled form of engineering classism, and
+you can’t build high-performing systems by breaking up your feedback loops
+this way.</p>
+</blockquote>
+<p>So the answer is: yes. Engineers are <em>always</em> on-call for <em>their service</em>.</p>
+<p>This can raise the question,&ldquo;If that&rsquo;s the case, then why doesn&rsquo;t each team have
+it&rsquo;s <em>own</em> on-call? And why can&rsquo;t the alerts route <em>directly</em> to them? Why have
+a shared on-call at all?&rdquo;</p>
+<p>Let&rsquo;s apply that question to our metaphor: Would you accept a condition where
+your &ldquo;engine is overheating&rdquo; light pings your mechanic instead of you? Would it
+become your mechanic&rsquo;s job to phone you or chase your car around to get you to
+slow down or stop? That sounds like a lot of engines are going to be driven into
+the ground by people who were never told there was an issue.</p>
+<p>The fact is, many alerts can be mitigated without in-depth knowledge of the
+application. That is the purpose of runbooks: to provide instructions on
+mitigating, not fixing, problems.</p>
+<p>I do support the idea of individual teams having an on-call rotation for
+escalations. If the org is large enough, and has enough resources, then everyone
+&ldquo;can take their own car,&rdquo; and have their own alerts and rotations. But many
+engineering orgs simply do not have the resources to support this. The idea I
+want to put forward is that org-wide on-call rotations can succeed if management
+clearly frames the goal of on-call when engineers join the rotation.</p>
+<h2 id="the-goal-of-on-call">The Goal of On-Call</h2>
+<p>I&rsquo;ve heard that one motivation for org-wide on-call is &ldquo;so everyone, eventually,
+learns the whole application.&rdquo; This framing can lead to conflict and
+frustration, as members of one team helpfully offer constructive criticism to
+members of another in the name of &ldquo;making on-call suck less.&rdquo; It all but
+guarantees that people step on one another&rsquo;s toes. It fosters an &ldquo;us vs them&rdquo;
+mentality, and usually makes on-call (and the whole org) suck more.</p>
+<p>The goal of org-wide on-call is to maintain global awareness of how the app
+behaves from the perspective of the customer. Even Charity Majors recommends
+that managers put themselves in the on-call rotation. This is not to make them
+full-stack engineers. This is because managers, also, need to be thinking about
+the customer impact of changes moving through the pipeline.</p>
+<p>We build applications to serve customers. That&rsquo;s the difference between being in
+business and being in a hackathon. No engineer is made better at their job by
+ignoring the metrics that impact the customer&rsquo;s experience. No code is better
+for being less observable, no architecture is better for being impossible to
+troubleshoot (or impossible to manipulate at runtime).</p>
+<p>It is not reasonable, and it is not safe, to constantly treat the holistic
+health of the app as &ldquo;someone else&rsquo;s job.&rdquo; It is not reasonable, and it is not
+safe to force a small group of people do all the driving. In the name of safety,
+and fostering common purpose, many orgs opt for the org-wide rotation, with
+everyone taking a turn at the wheel.</p>
+<h2 id="supporting-on-call">Supporting On-Call</h2>
+<p>Of course, this re-framing is only half the job. If Engineers are going to be
+&ldquo;driving&rdquo; during on-call week, that means they&rsquo;re not going to be doing anything
+else. Going back to our metaphor, imagine being asked to take your turn at the
+wheel, and then the person handing you the keys says:</p>
+<p>&ldquo;Oh &ndash; and since you&rsquo;re driving, you should also be able to tune the carburetor
+and rotate the tires. Because you&rsquo;re driving anyway.&rdquo;</p>
+<p>Doesn&rsquo;t make a lot of sense, does it?</p>
+<p>Loading up on-call engineers with sprint tickets forces them to switch context
+when an alert comes in. This can cost them, and the org, up to
+<a href="https://www.psychologytoday.com/us/blog/brain-wise/201209/the-true-cost-of-multi-tasking">40%</a>
+of their productivity.</p>
+<p>If these engineer cares about their performance reviews, that could mean they
+put in 40% <em>more</em> time and effort to catch up. This leads to frustration,
+conflict, and burnout. On the other end of the spectrum, they could truly divide
+their efforts and attention. With all the context switching, that means their
+remaining 60% of effort is split between on-call and sprint work. That&rsquo;s 30%
+effort on either task.</p>
+<p>Giving on-call engineers sprint work is asking for less than 1/3 of an engineer
+on that sprint work, and less than 1/3 of an engineer on-call.</p>
+<p>That is not reasonable, and it&rsquo;s not safe.</p>
+<p>Framing On-Call in terms of Engineers &ldquo;Taking a Turn at the Wheel&rdquo; helps both
+Management and Engineering maintain a clear understanding of the boundaries that
+make these org-wide rotations successful.</p>
+
+</div>
+
+    <div class="footer">
+  
+  <div class="footer-social">
+    
+      <span class="social-icon social-icon-twitter">
+        <a href="https://twitter.com/aaron_eaton" title="twitter" target="_blank" rel="noopener">
+          <img src="/images/social/twitter.svg" width="24" height="24" alt="twitter"/>
+        </a>
+      </span>
+    
+      <span class="social-icon social-icon-github">
+        <a href="https://github.com/AaronMe" title="github" target="_blank" rel="noopener">
+          <img src="/images/social/github.svg" width="24" height="24" alt="github"/>
+        </a>
+      </span>
+    
+      <span class="social-icon social-icon-linkedin">
+        <a href="https://www.linkedin.com/in/aaron-eaton-2018/" title="linkedin" target="_blank" rel="noopener">
+          <img src="/images/social/linkedin.svg" width="24" height="24" alt="linkedin"/>
+        </a>
+      </span>
+    
+  </div>
+  
+  <div class="footer-copyright">
+    <span class="copy">Copyright &copy; 2023 Aaron Eaton.</span>
+  </div>
+</div>
+  </div>
+
+  
+
+  
+
+  
+  <script type="text/javascript" src="/js/bundle.min.e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.js"></script>
+  
+
+  
+  
+
+  
+  
+  
+    
+      
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-B4RD5175XG"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-B4RD5175XG');
+      </script>
+    
+  
+
+
+</body>
+</html>

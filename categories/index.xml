@@ -5,6 +5,7 @@
     <link>https://aaroneaton.com/categories/</link>
     <description>Recent content in Categories on AaronEaton.com</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language><atom:link href="https://aaroneaton.com/categories/index.xml" rel="self" type="application/rss+xml" />
+    <language>en-us</language>
+    <atom:link href="https://aaroneaton.com/categories/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>

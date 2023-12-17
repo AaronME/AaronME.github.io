@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Fluid Concepts and Creative Analogies on AaronEaton.com</title>
+    <link>https://aaroneaton.com/analogies/</link>
+    <description>Recent content in Fluid Concepts and Creative Analogies on AaronEaton.com</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 01 Dec 2023 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://aaroneaton.com/analogies/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Taking the Pager is Taking the Wheel, Not the Title</title>
+      <link>https://aaroneaton.com/analogies/atthewheel/</link>
+      <pubDate>Sat, 16 Dec 2023 00:00:00 +0000</pubDate>
+      <guid>https://aaroneaton.com/analogies/atthewheel/</guid>
+      <description>This post was partly inspired by Sean Kilgore&amp;rsquo;s recent blog about Common Errors in the Paved Path metaphor. Sean&amp;rsquo;s language mirrors a metaphor that surfaced within my team about our On-Call Rotation. Sean contrasts the &amp;ldquo;paved path&amp;rdquo; an organization provides to its developers with the &amp;ldquo;vehicles&amp;rdquo; each team puts on that path. My team talks about being on-call in terms of &amp;ldquo;taking the wheel of the vehicle,&amp;rdquo; instead of the more common &amp;ldquo;being responsible for fixing anything that goes wrong.</description>
+    </item>
+  </channel>
+</rss>
